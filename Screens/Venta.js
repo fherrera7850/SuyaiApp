@@ -20,8 +20,8 @@ const RealizarPedido = ({ navigation, route }) => {
 
 
     const products = [
-        { _id: "630e27835bd572652e271c04", Nombre: 'Recarga 20Lt', Precio: 2000, Cantidad: 0 },
-        { _id: "630e27b55bd572652e271c06", Nombre: 'Recarga 10Lt', Precio: 1300, Cantidad: 0 },
+        { _id: "630e27835bd572652e271c04", Nombre: 'Recarga 20Lt.', Precio: 2000, Cantidad: 0 },
+        { _id: "630e27b55bd572652e271c06", Nombre: 'Recarga 10Lt.', Precio: 1300, Cantidad: 0 },
         { _id: "630e27e55bd572652e271c08", Nombre: 'Nuevo 20Lt', Precio: 5500, Cantidad: 0 },
         { _id: "630e28175bd572652e271c0a", Nombre: 'Dispensador USB', Precio: 7000, Cantidad: 0 },
         { _id: "630e28485bd572652e271c0c", Nombre: 'Dispensador Electrico', Precio: 50000, Cantidad: 0 }
