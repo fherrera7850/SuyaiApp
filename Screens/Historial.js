@@ -14,7 +14,7 @@ const Historial = ({ props }) => {
             headers: { 'Content-Type': 'application/json' }
         };
         //console.log(ROProductoVenta)
-        fetch('http://192.168.1.114:9000/api/ventaspordia/', RO)
+        fetch('http://192.168.1.114:4000/api/venta/Historial', RO)
             .then(response => response.json())
             .then(json => {
                 console.log(json)
@@ -46,6 +46,7 @@ const Historial = ({ props }) => {
                     var FechaAyer = new Date()
                     FechaAyer.setDate(FechaAyer.getDate() - 1)
                     var FechaVenta = new Date(item.FechaVenta)
+                    
                     var FechaTitulo = ""
 
                     if (FechaHoy.toLocaleDateString() === FechaVenta.toLocaleDateString()) {
@@ -56,8 +57,8 @@ const Historial = ({ props }) => {
                     } else {
                         FechaTitulo = formatDateString(FechaVenta, true);
                     }
-
-                    console.log(FechaTitulo)
+                    console.log("FechaVenta",new Date(item.FechaVenta))
+                    console.log("FechaTitulo",FechaTitulo)
                     return (
                         <View key={index}>
                             {encabezado(FechaTitulo, item.NroVentas, item.SumaVentas)}
@@ -69,11 +70,11 @@ const Historial = ({ props }) => {
                                                 <Text style={styles.textName}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
                                                 <View style={{ flexDirection: "row" }}>
                                                     <Text style={styles.textName}>Cliente: </Text>
-                                                    <Text style={{ fontSize: 17 }}>{item2.Cliente_id.Nombre}</Text>
+                                                    <Text style={{ fontSize: 17 }}>{item2.Cliente}</Text>
                                                 </View>
                                             </View>
                                             <View style={styles.textPrecio}>
-                                                <Text>{FechaVenta.getHours() + ":" + FechaVenta.getMinutes()}</Text>
+                                                <Text>{new Date(item2.Fecha).getHours() + ":" + new Date(item2.Fecha).getMinutes()}</Text>
                                             </View>
                                         </TouchableOpacity>
                                     </View>

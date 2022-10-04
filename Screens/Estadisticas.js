@@ -1,6 +1,6 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Alert } from 'react-native'
 import React, { useEffect, useState } from 'react'
-import formatDate, { formatDateString, formatoMonedaChileno } from './../Components/util'
+import { formatDateYYYYMMDD, formatDateString, formatoMonedaChileno } from './../Components/util'
 
 const Estadisticas = ({ navigation, route }) => {
 
@@ -15,18 +15,21 @@ const Estadisticas = ({ navigation, route }) => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    var url = 'http://192.168.1.114:9000/api/SumaVentasRangoFechas/' + formatDate(fechas.FechaInicio) + '/' + formatDate(fechas.FechaFin)
+    var url = 'http://192.168.1.114:4000/api/venta/estadisticas/' + formatDateYYYYMMDD(fechas.FechaInicio) + '/' + formatDateYYYYMMDD(fechas.FechaFin)
 
     fetch(url, RO)
       .then(response => response.json())
       .then(json => {
-        console.log(json)
+        console.log("RESPUESTA ESTADISTICAS", json)
         if (json.length > 0) {
-          setSuma(json[0].sum)
-          setNroVentas(json[0].count)
+          setSuma(json[0].SumaVentas)
+          setNroVentas(json[0].NroVentas)
+        } else {
+          throw new Error("Se produjo un error al obtener los datos")
         }
       })
       .catch(err => {
+        Alert.alert("ERROR", err.toString())
         console.error("Error: ", err);
       })
   }, [])

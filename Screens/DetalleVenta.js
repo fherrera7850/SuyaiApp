@@ -1,68 +1,61 @@
-import { View, Text, StyleSheet, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable, Alert, TouchableOpacity } from 'react-native'
 import React, { useState } from 'react'
 import { ButtonGroup } from "@rneui/themed";
 import { formatoMonedaChileno } from "../Components/util";
 
 const DetallePedido = ({ navigation, route }) => {
 
+    const [selectedIndex, setSelectedIndex] = useState(0);
+
     const Pedido = route.params.pedido.filter((x) => {
         return x.Cantidad > 0;
     });
 
-    const PrecioTotal = Pedido.reduce((acc, o) => acc + parseInt(o.Precio), 0)
+    let totalTemp = 0;
+    Pedido.forEach(element => {
+        totalTemp += (element.Precio * element.Cantidad)
+    });
+
+    const PrecioTotal = totalTemp
     const CantidadTotal = Pedido.reduce((acc, o) => acc + parseInt(o.Cantidad), 0)
 
     const IngresaVenta = () => {
-        // POST request using fetch inside useEffect React hook
         var fecha = new Date()
-        console.log(fecha)
+        //console.log(fecha)
         const ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                MedioPago: selectedIndex,
-                PrecioTotalVenta: PrecioTotal,
-                Cliente_id: "630e0d765bd572652e271bf3",
-                Fecha: fecha
+                Venta: {
+                    MedioPago: selectedIndex,
+                    PrecioTotalVenta: PrecioTotal,
+                    Cliente_id: "1",
+                    Fecha: fecha,
+                    Dcto: 0
+                },
+                ProductosVenta: Pedido
             })
         };
 
-        fetch('http://192.168.1.114:9000/api/venta/', ROVenta)
-            .then(response => response.json())
-            .then(json => {
-                console.log(json)
-                Pedido.forEach(element => {
-                    var ROProductoVenta = {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            Venta_id: json._id,
-                            Producto_id: element._id,
-                            Cantidad: element.Cantidad,
-                            PrecioVentaProducto: (element.Precio / element.Cantidad)
-                        })
-                    };
-                    //console.log(ROProductoVenta)
-                    fetch('http://192.168.1.114:9000/api/productoventa/', ROProductoVenta)
-                        .then(response => response.json())
-                        .then(json => {
-                            console.log(json)
-                        })
-                        .catch(err => {
-                            console.error("Error: ", err);
-                        })
-                });
-                navigation.navigate("VentaOk", { MontoVenta: PrecioTotal })
+        fetch('http://192.168.1.114:4000/api/venta/', ROVenta)
+            .then(response => {
+                console.log("response.status", response.status)
+                if (response.status === 200) {
+                    console.log("RESULTADO INSERCION VENTA: ", JSON.stringify(response))
+                    navigation.navigate("VentaOk", { MontoVenta: PrecioTotal })
+                }
+                else {
+                    throw new Error("Error")
+                }
             })
+            /* .then(json => {
+                console.log("RESULTADO INSERCION VENTA: ", json)
+                navigation.navigate("VentaOk", { MontoVenta: PrecioTotal })
+            }) */
             .catch(err => {
-                console.error("Error: ", err);
+                Alert.alert("Error: ", err.toString());
             })
     }
-
-    const [selectedIndex, setSelectedIndex] = useState(0);
-
-
-    console.log(Pedido, PrecioTotal, CantidadTotal)
 
 
 
@@ -70,7 +63,6 @@ const DetallePedido = ({ navigation, route }) => {
         <View style={styles.ViewPrincipal}>
             {
                 Pedido.map((item, index) => {
-                    var precioUnitario = item.Precio / item.Cantidad
                     return (
                         <View key={item._id} style={styles.ViewItem}>
 
@@ -80,10 +72,10 @@ const DetallePedido = ({ navigation, route }) => {
 
                             <View style={{ flex: 2 }}>
                                 <Text style={styles.TextNombre}>{item.Nombre}</Text>
-                                <Text style={styles.TextPrecioUnitario}>{"$ " + formatoMonedaChileno(precioUnitario)}</Text>
+                                <Text style={styles.TextPrecioUnitario}>{"$ " + formatoMonedaChileno(item.Precio)}</Text>
                             </View>
                             <View style={{ flex: 1, alignItems: "flex-end" }}>
-                                <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio)}</Text>
+                                <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
                             </View>
                         </View>
                     )
@@ -94,8 +86,13 @@ const DetallePedido = ({ navigation, route }) => {
                     <Text style={{ fontSize: 25 }}>TOTAL:</Text>
                     <Text style={{ fontWeight: "bold", fontSize: 25, marginLeft: 5 }}>{"$ " + formatoMonedaChileno(PrecioTotal)}</Text>
                 </View>
+                <View style={{ flexDirection: "row" }}>
+                    <TouchableOpacity onPress={() => { }}>
+                        <Text style={{ fontSize: 20, textDecorationLine: 'underline', color: "#00a8a8" }}>Dar Descuento</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
-            <View style={{ flex: 4 }}>
+            <View style={{ flex: 2 }}>
                 <ButtonGroup
                     buttons={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
                     selectedIndex={selectedIndex}
@@ -104,6 +101,9 @@ const DetallePedido = ({ navigation, route }) => {
                     }}
                     containerStyle={{ marginBottom: 20, borderColor: "#00a8a8" }}
                 />
+            </View>
+            <View style={{ flex: 2, justifyContent: "center", alignItems: "center" }}>
+
             </View>
             <View style={{ flex: 2, justifyContent: "center", alignItems: "center" }}>
                 <Pressable style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >

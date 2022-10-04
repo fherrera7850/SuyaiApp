@@ -1,258 +1,178 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Pressable } from "react-native";
-import { formatoMonedaChileno } from "../Components/util";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Pressable, Alert } from "react-native";
+import { formatoMonedaChileno, fetchWithTimeout } from "../Components/util";
 
 const RealizarPedido = ({ navigation, route }) => {
 
-    //const [products, setProducts] = useState([])
+    const [products, setProducts] = useState([])
     const [contItem, setContItem] = useState(0)
-    const [pedidoNuevo, setPedidoNuevo] = useState([])
     const [total, setTotal] = useState(0)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         if (route.params && route.params.Retorno) {
             console.log(route)
-            setContItem(0)
-            setPedidoNuevo([])
-            setTotal(0)
+            Limpiar()
         }
     }, [route.params])
 
+    useEffect(() => {
+        cargaProductos()
+    }, [])
 
-    const products = [
-        { _id: "630e27835bd572652e271c04", Nombre: 'Recarga 20Lt.', Precio: 2000, Cantidad: 0 },
-        { _id: "630e27b55bd572652e271c06", Nombre: 'Recarga 10Lt.', Precio: 1300, Cantidad: 0 },
-        { _id: "630e27e55bd572652e271c08", Nombre: 'Nuevo 20Lt', Precio: 5500, Cantidad: 0 },
-        { _id: "630e28175bd572652e271c0a", Nombre: 'Dispensador USB', Precio: 7000, Cantidad: 0 },
-        { _id: "630e28485bd572652e271c0c", Nombre: 'Dispensador Electrico', Precio: 50000, Cantidad: 0 }
-    ]
+    async function cargaProductos() {
+        try {
+            var RO = {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 5000
+            };
+            var url = 'http://192.168.1.114:4000/api/producto/'
+            await fetchWithTimeout(url, RO)
+                .then(response => response.json())
+                .then(json => {
+                    json.forEach(element => {
+                        element.Cantidad = 0
+                    });
+                    console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0", json)
+                    setProducts(json)
+                    setLoading(false)
+                })
 
-    /* const fetchFunctionState = (url, ro, state) => {
-        fetch(url, ro).
-            then(response => response.json()).
-            then((data) => {
-                if (state === "products") {
-                    setProducts(Cantidad0(data))
-                }
-                console.log("Response json: /n", data)
-            }).
-            catch((e) => {
-                console.log("Error setting: " + e)
-            })
-    } */
-
-    /* useEffect(() => {
-        var RO = {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        };
-        var url = 'http://192.168.1.114:9000/api/producto/'
-        //console.log(ROProductoVenta)
-        fetch(url, RO)
-            .then(response => response.json())
-            .then(json => {
-                json.forEach(element => {
-                    element.Cantidad = 0
-                });
-                console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0", json)
-                setProducts(json)
-            })
-            .catch(err => {
-                console.error("ErrorD: ", err);
-            })
-    }, []) */
+        } catch (error) {
+            setLoading(false)
+            Alert.alert("ERROR", "No se han podido cargar los productos",)
+        }
+    }
 
     const agregarQuitarItem = (item, agregar) => {
+        let itemProducto = item
+        let ArrayProductos = products
+
         //CONTADOR DE ITEMS
         if (agregar) {
             setContItem(contItem + 1)
+            let totalTemp = total
+            totalTemp += itemProducto.Precio
+            ArrayProductos.forEach(element => {
+                if (element._id === itemProducto._id) {
+                    element.Cantidad += 1
+                }
+            })
+            setProducts(ArrayProductos)
+            setTotal(totalTemp)
         } else {
             setContItem(contItem - 1)
-        }
-
-        //CARRO VACIO AGREGA PRIMER OBJETO AL ARRAY
-        if (pedidoNuevo.length === 0) {
-            if (agregar) {
-                item.Cantidad += 1
-            } else {
-                item.Cantidad -= 1
-                //pedidoNuevo.splice(pedidoNuevo.findIndex(x => x.cantidad === 0), 1);
-            }
-            setTotal(item.Precio)
-            console.log("set total (sin items)", item.Precio)
-
-            setPedidoNuevo(pedidoNuevo.concat(item))
-        } else {
-            //CARRO CON MISMO PRODUCTO, ACTUALIZA SOLO CANTIDAD y VALOR TOTAL
-            var repetido = false
-            pedidoNuevo.forEach(element => {
-                if (element._id === item._id) {
-                    if (agregar) {
-                        element.Cantidad += 1
-                        element.Precio += item.Precio
-                    } else {
-                        element.Cantidad -= 1
-                        element.Precio -= item.Precio
-                        //pedidoNuevo.splice(pedidoNuevo.findIndex(x => x.cantidad === 0), 1);
-                    }
-
-                    setPedidoNuevo(pedidoNuevo)
-                    repetido = true
-                    var totalTemp = 0
-                    pedidoNuevo.forEach(element => {
-                        totalTemp += element.Precio
-                    });
-                    setTotal(totalTemp)
-                    console.log("set total (ya hay elementos en el carro)", totalTemp)
-                    console.log(products)
-
+            let totalTemp = total
+            totalTemp -= itemProducto.Precio
+            ArrayProductos.forEach(element => {
+                if (element._id === itemProducto._id) {
+                    element.Cantidad -= 1
                 }
-            });
-            //SE AGREGA NUEVO ITEM
-            if (!repetido) {
-                if (agregar) {
-                    item.Cantidad += 1
-                } else {
-                    item.Cantidad -= 1
-                    //pedidoNuevo.splice(pedidoNuevo.findIndex(x => x.cantidad === 0), 1);
-                }
-                var TempPedido = pedidoNuevo.concat(item)
-                setPedidoNuevo(TempPedido)
-                var totalTemp = 0
-                TempPedido.forEach(element => {
-                    totalTemp += element.Precio
-                });
-                console.log("set total (ya hay elementos en el carro)", totalTemp)
-                setTotal(totalTemp)
-
-            }
-            //CALCULA TOTAL
-            /* var totalTemp = 0
-            pedidoNuevo.forEach(element => {
-                totalTemp += element.Precio
-            });
-            setTotal(totalTemp) */
+            })
+            setProducts(ArrayProductos)
+            setTotal(totalTemp)
         }
     }
 
-    const Cantidad0 = (json) => {
-        let productos = json.forEach(element => {
-            element.Cantidad = 0
-        })
-        return productos
+    const Siguiente = () => {
+        navigation.navigate('DetalleVenta', { pedido: products })
     }
 
     const Limpiar = () => {
-
-        /* var ro = {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        } */
-
-
-        //fetchFunctionState("http://192.168.1.114:9000/api/producto/", ro, "products")
-        var RO = {
-            method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
-        };
-        var url = 'http://192.168.1.114:9000/api/producto/'
-        //console.log(ROProductoVenta)
-        fetch(url, RO)
-            .then(response => response.json())
-            .then(json => {
-                json.forEach(element => {
-                    element.Cantidad = 0
-                });
-                //console.log(json)
-                setProducts(json)
-                setPedidoNuevo([])
-                setTotal(0)
-                setContItem(0)
-
-            })
-            .catch(err => {
-                console.error("Error: ", err);
-            })
+        let ArrayProductos = products
+        ArrayProductos.forEach(element => {
+            element.Cantidad = 0
+        })
+        setProducts(ArrayProductos)
+        setTotal(0)
+        setContItem(0)
         console.log("Limpia")
     }
 
-    return (
-        <View style={{ flex: 1 }}>
-            <ScrollView style={styles.scrollView}>
-                {
-                    products.map((item, index) => {
+    {
+        if (loading) {
+            return (
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    <Image source={require("./../assets/Images/spin2balls.gif")} />
+                    <Text style={{ marginTop: 30, fontSize: 17 }}>Cargando Productos...</Text>
+                </View>
 
-                        pedidoNuevo.forEach(element => {
-                            if (element._id === item._id) {
-                                item.Cantidad = element.Cantidad
-                            }
-                        });
+            )
+        } else {
+            return (
 
-                        return (
-                            <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => agregarQuitarItem(item, true)}>
-                                <Image
-                                    source={require("../assets/Images/bidon.png")}
-                                    style={styles.image}
-                                />
-                                <View style={{ flex: 2 }}>
-                                    <Text style={styles.textName}>{item.Nombre}</Text>
-                                    <Text style={{ fontSize: 14, marginLeft: 10, color: "gray" }}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
-                                </View>
-                                <View style={styles.textPrecio}>
+                <View style={{ flex: 1 }}>
+                    <ScrollView style={styles.scrollView}>
+                        {
+
+                            products.map((item, index) => {
 
 
-                                    {item.Cantidad > 0 ?
-                                        <View style={{ flexDirection: "row" }}>
-                                            <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, false)}>
-                                                <Text style={styles.TextoBotonAgregarQuitar}>
-                                                    -
-                                                </Text>
-                                            </Pressable>
 
-                                            <TouchableOpacity>
-                                                <Text style={styles.TextCantidad}>{item.Cantidad}</Text>
-                                            </TouchableOpacity>
-
-
-                                            <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, true)}>
-                                                <Text style={styles.TextoBotonAgregarQuitar}>
-                                                    +
-                                                </Text>
-                                            </Pressable>
-
+                                return (
+                                    <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => agregarQuitarItem(item, true)}>
+                                        <Image
+                                            source={require("../assets/Images/bidon.png")}
+                                            style={styles.image}
+                                        />
+                                        <View style={{ flex: 2 }}>
+                                            <Text style={styles.textName}>{item.Nombre}</Text>
+                                            <Text style={{ fontSize: 14, marginLeft: 10, color: "gray" }}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
                                         </View>
-                                        :
-                                        <></>
-                                    }
-                                </View>
+                                        <View style={styles.textPrecio}>
 
-                            </TouchableOpacity>
-                        )
-                    })
-                }
-            </ScrollView>
-            <View style={{ flex: 3 }}>
-                {contItem > 1 ?
-                    <Pressable style={styles.BotonSgte} onPress={() => navigation.navigate('DetalleVenta', { pedido: pedidoNuevo })} >
-                        <Text style={styles.TextoBotonSgte}>{contItem + " Items ($ " + formatoMonedaChileno(total) + ")"}</Text>
-                    </Pressable>
-                    :
-                    <Pressable disabled={contItem === 0} style={styles.BotonSgte} onPress={() => navigation.navigate('DetalleVenta', { pedido: pedidoNuevo })} >
-                        <Text style={styles.TextoBotonSgte}>{contItem + " Item ($ " + formatoMonedaChileno(total) + ")"}</Text>
-                    </Pressable>
-                }
-                <Pressable style={styles.BotonLimpiar} onPress={() => {
-                    setPedidoNuevo([]);
-                    setTotal(0);
-                    setContItem(0)
-                }} >
-                    <Text style={styles.TextoBotonSgte}>Limpiar</Text>
-                </Pressable>
-            </View>
 
-        </View>
+                                            {item.Cantidad > 0 ?
+                                                <View style={{ flexDirection: "row" }}>
+                                                    <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, false)}>
+                                                        <Text style={styles.TextoBotonAgregarQuitar}>
+                                                            -
+                                                        </Text>
+                                                    </Pressable>
 
-    );
+                                                    <TouchableOpacity>
+                                                        <Text style={styles.TextCantidad}>{item.Cantidad}</Text>
+                                                    </TouchableOpacity>
+
+
+                                                    <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, true)}>
+                                                        <Text style={styles.TextoBotonAgregarQuitar}>
+                                                            +
+                                                        </Text>
+                                                    </Pressable>
+
+                                                </View>
+                                                :
+                                                <></>
+                                            }
+                                        </View>
+
+                                    </TouchableOpacity>
+                                )
+                            })
+                        }
+                    </ScrollView>
+                    <View style={{ flex: 3 }}>
+                        {contItem > 1 ?
+                            <Pressable style={styles.BotonSgte} onPress={() => Siguiente()} >
+                                <Text style={styles.TextoBotonSgte}>{contItem + " Items ($ " + formatoMonedaChileno(total) + ")"}</Text>
+                            </Pressable>
+                            :
+                            <Pressable disabled={contItem === 0} style={styles.BotonSgte} onPress={() => Siguiente()} >
+                                <Text style={styles.TextoBotonSgte}>{contItem + " Item ($ " + formatoMonedaChileno(total) + ")"}</Text>
+                            </Pressable>
+                        }
+                        <Pressable style={styles.BotonLimpiar} onPress={() => Limpiar()} >
+                            <Text style={styles.TextoBotonSgte}>Limpiar</Text>
+                        </Pressable>
+                    </View>
+
+                </View>
+
+            );
+        }
+    }
 }
 
 export default RealizarPedido;
