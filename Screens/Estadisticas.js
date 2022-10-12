@@ -1,6 +1,7 @@
 import { View, Text, Pressable, StyleSheet, Alert } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { formatDateYYYYMMDD, formatDateString, formatoMonedaChileno } from './../Components/util'
+import { REACT_APP_SV } from "@env"
 
 const Estadisticas = ({ navigation, route }) => {
 
@@ -15,7 +16,7 @@ const Estadisticas = ({ navigation, route }) => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    var url = 'http://192.168.1.114:4000/api/venta/estadisticas/' + formatDateYYYYMMDD(fechas.FechaInicio) + '/' + formatDateYYYYMMDD(fechas.FechaFin)
+    var url = REACT_APP_SV + '/api/venta/estadisticas/' + formatDateYYYYMMDD(fechas.FechaInicio) + '/' + formatDateYYYYMMDD(fechas.FechaFin)
 
     fetch(url, RO)
       .then(response => response.json())

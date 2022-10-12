@@ -61,4 +61,14 @@ export async function fetchWithTimeout(resource, options = {}) {
     return response;
 }
 
+export const getUTCDate = () => {
+    var date = new Date();
+    var dateutc = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(),
+        date.getUTCDate(), date.getUTCHours(),
+        date.getUTCMinutes(), date.getUTCSeconds());
+    return (new Date(dateutc))
+}
+
+
+
 

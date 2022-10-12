@@ -1,29 +1,61 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Button } from "react-native";
-import { formatoMonedaChileno, formatDateString } from "../Components/util";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Button, Alert } from "react-native";
+import { formatoMonedaChileno, formatDateString, fetchWithTimeout } from "../Components/util";
+import Loader from "../Components/Loader";
 import { useIsFocused } from "@react-navigation/native";
+import { REACT_APP_SV } from "@env"
+import moment from "moment";
 
 const Historial = ({ props }) => {
 
     const isFocused = useIsFocused();
     const [Ventas, SetVentas] = useState([])
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         var RO = {
             method: 'GET',
-            headers: { 'Content-Type': 'application/json' }
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 5000
         };
-        //console.log(ROProductoVenta)
-        fetch('http://192.168.1.114:4000/api/venta/Historial', RO)
-            .then(response => response.json())
-            .then(json => {
-                console.log(json)
-                SetVentas(json)
-            })
-            .catch(err => {
-                console.error("Error: ", err);
-            })
+
+        /* let date = new Date().toUTCString();
+        console.log("UTC Now Date: " + date); // UTC Date: Thu, 27 Jun 2019 07:50:46 GMT
+
+        let localDate = moment(date).local(true).format("YYYY-MM-DD HH:mm:ss");
+        console.log("Moment Local Date: " + localDate); // Moment Local Date: 2019-06-27 13:20:46 */
+
+        cargaVentas(REACT_APP_SV + '/api/venta/Historial', RO)
+
     }, [props, isFocused])
+
+    const horaCliente = (date) => {
+        let dateUTC = new Date(date).toUTCString()
+        let fecha = moment(dateUTC).local(true).format("YYYY-MM-DD HH:mm:ss")
+        //console.log("🚀horaCliente", fecha)
+        return fecha
+    }
+
+    const cargaVentas = async (url, RO) => {
+        try {
+            await fetchWithTimeout(url, RO)
+                .then(response => response.json())
+                .then(json => {
+                    //console.log(json)
+                    if (!json.ErrorMessage) {
+                        SetVentas(json)
+                    }
+                    setLoading(false)
+                })
+                /* .catch((e)=>{
+                    console.log(e)
+                }) */
+        } catch (error) {
+            setLoading(false)
+            Alert.alert("ERROR", "No se ha podido cargar el historial ", error.toString())
+        }
+
+    }
 
     const encabezado = (FechaTitulo, NroVentasDia, SumaVentasDia) => {
         return (
@@ -34,108 +66,129 @@ const Historial = ({ props }) => {
         )
     }
 
+    {
+        if (loading) {
 
-    return (
-        <View>
-            <ScrollView style={styles.scrollView}>
+            return (
+                Loader("Recuperando Ventas...")
+            )
+        } else if (Ventas.length === 0) {
+            return (
+                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                    <Text>No hay ventas para mostrar</Text>
+                </View>
+            )
+        }
+        else {
+            return (
+                <View>
+                    <ScrollView style={styles.scrollView}>
 
-                {Ventas.map((item, index) => {
-                    //console.log(item)
+                        {Ventas.map((item, index) => {
 
-                    var FechaHoy = new Date()
-                    var FechaAyer = new Date()
-                    FechaAyer.setDate(FechaAyer.getDate() - 1)
-                    var FechaVenta = new Date(item.FechaVenta)
-                    
-                    var FechaTitulo = ""
+                            let FechaHoy = moment(horaCliente(new Date())).format("YYYYMMDD")
+                            let FechaAyer = moment(horaCliente(new Date().setDate(new Date().getDate() - 1))).format("YYYYMMDD")
+                            var FechaVenta = moment(item.FechaVenta).format("YYYYMMDD")
 
-                    if (FechaHoy.toLocaleDateString() === FechaVenta.toLocaleDateString()) {
-                        FechaTitulo = "Hoy"
-                    }
-                    else if (FechaAyer.toLocaleDateString() === FechaVenta.toLocaleDateString()) {
-                        FechaTitulo = "Ayer"
-                    } else {
-                        FechaTitulo = formatDateString(FechaVenta, true);
-                    }
-                    console.log("FechaVenta",new Date(item.FechaVenta))
-                    console.log("FechaTitulo",FechaTitulo)
-                    return (
-                        <View key={index}>
-                            {encabezado(FechaTitulo, item.NroVentas, item.SumaVentas)}
-                            {item.Ventas.map((item2, index2) => {
-                                return (
-                                    <View key={index2}>
-                                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                                            <View style={{ flex: 2 }}>
-                                                <Text style={styles.textName}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
-                                                <View style={{ flexDirection: "row" }}>
-                                                    <Text style={styles.textName}>Cliente: </Text>
-                                                    <Text style={{ fontSize: 17 }}>{item2.Cliente}</Text>
-                                                </View>
+                            var FechaTitulo = ""
+
+                            if (FechaHoy === FechaVenta) {
+                                FechaTitulo = "Hoy"
+                            }
+                            else if (FechaAyer === FechaVenta) {
+                                FechaTitulo = "Ayer"
+                            } else {
+                                FechaTitulo = formatDateString(moment(FechaVenta).format("YYYY-MM-DD"), true);
+                                console.log("🚀 ~ file: Historial.js ~ line 106 ~ {Ventas.map ~ FechaVenta", FechaVenta)
+                            }
+                            /* console.log("FechaVenta", new Date(item.FechaVenta))
+                            console.log("FechaTitulo", FechaTitulo) */
+                            return (
+                                <View key={index}>
+                                    {encabezado(FechaTitulo, item.NroVentas, item.SumaVentas)}
+                                    {item.Ventas.map((item2, index2) => {
+
+                                        let hora = moment(item2.Fecha).format("HH:mm")
+                                        /* console.log("🚀 ~ file: Historial.js ~ line 111 ~ {item.Ventas.map ~ horaOriginal BD", horaOriginal)
+                                        console.log("🚀 ~ file: Historial.js ~ line 110 ~ {item.Ventas.map ~ hora", hora)
+                                        console.log("🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀") */
+
+                                        return (
+                                            <View key={index2}>
+                                                <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                                                    <View style={{ flex: 2 }}>
+                                                        <Text style={styles.textName}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
+                                                        <View style={{ flexDirection: "row" }}>
+                                                            <Text style={styles.textName}>Cliente: </Text>
+                                                            <Text style={{ fontSize: 17 }}>{item2.Cliente}</Text>
+                                                        </View>
+                                                    </View>
+                                                    <View style={styles.textPrecio}>
+                                                        <Text>{hora}</Text>
+                                                    </View>
+                                                </TouchableOpacity>
                                             </View>
-                                            <View style={styles.textPrecio}>
-                                                <Text>{new Date(item2.Fecha).getHours() + ":" + new Date(item2.Fecha).getMinutes()}</Text>
-                                            </View>
-                                        </TouchableOpacity>
-                                    </View>
-                                )
-                            })}
-                        </View>
-                    )
-                })}
+                                        )
+                                    })}
+                                </View>
+                            )
+                        })}
 
-                {/* 
+                        {/* 
+        
+                        <Text style={styles.textName}>Ayer</Text>
+                        <Text>2 Ventas - Total: $87.000</Text>
+        
+        
+        
+        
+                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                            <View style={{ flex: 2 }}>
+                                <Text style={styles.textName}>$47.000</Text>
+                                <View style={{ flexDirection: "row" }}>
+                                    <Text style={styles.textName}>Cliente: </Text>
+                                    <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
+                                </View>
+                            </View>
+                            <View style={styles.textPrecio}>
+                                <Text>19:38</Text>
+                            </View>
+                        </TouchableOpacity>
+                        <Text style={styles.textFecha}>Ayer</Text>
+                        <Text>2 Ventas - Total: $87.000</Text>
+                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                            <View style={{ flex: 2 }}>
+                                <Text style={styles.textName}>$40.000</Text>
+                                <View style={{ flexDirection: "row" }}>
+                                    <Text style={styles.textName}>Cliente: </Text>
+                                    <Text style={{ fontSize: 17 }}>Juan Perez</Text>
+                                </View>
+                            </View>
+                            <View style={styles.textPrecio}>
+                                <Text>20:20</Text>
+                            </View>
+        
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                            <View style={{ flex: 2 }}>
+                                <Text style={styles.textName}>$47.000</Text>
+                                <View style={{ flexDirection: "row" }}>
+                                    <Text style={styles.textName}>Cliente: </Text>
+                                    <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
+                                </View>
+                            </View>
+                            <View style={styles.textPrecio}>
+                                <Text>19:38</Text>
+                            </View>
+                        </TouchableOpacity> */}
+                    </ScrollView>
 
-                <Text style={styles.textName}>Ayer</Text>
-                <Text>2 Ventas - Total: $87.000</Text>
+                </View>
 
+            );
+        }
+    }
 
-
-
-                <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                    <View style={{ flex: 2 }}>
-                        <Text style={styles.textName}>$47.000</Text>
-                        <View style={{ flexDirection: "row" }}>
-                            <Text style={styles.textName}>Cliente: </Text>
-                            <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
-                        </View>
-                    </View>
-                    <View style={styles.textPrecio}>
-                        <Text>19:38</Text>
-                    </View>
-                </TouchableOpacity>
-                <Text style={styles.textFecha}>Ayer</Text>
-                <Text>2 Ventas - Total: $87.000</Text>
-                <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                    <View style={{ flex: 2 }}>
-                        <Text style={styles.textName}>$40.000</Text>
-                        <View style={{ flexDirection: "row" }}>
-                            <Text style={styles.textName}>Cliente: </Text>
-                            <Text style={{ fontSize: 17 }}>Juan Perez</Text>
-                        </View>
-                    </View>
-                    <View style={styles.textPrecio}>
-                        <Text>20:20</Text>
-                    </View>
-
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                    <View style={{ flex: 2 }}>
-                        <Text style={styles.textName}>$47.000</Text>
-                        <View style={{ flexDirection: "row" }}>
-                            <Text style={styles.textName}>Cliente: </Text>
-                            <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
-                        </View>
-                    </View>
-                    <View style={styles.textPrecio}>
-                        <Text>19:38</Text>
-                    </View>
-                </TouchableOpacity> */}
-            </ScrollView>
-
-        </View>
-
-    );
 }
 
 export default Historial;

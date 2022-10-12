@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Pressable, Alert } from "react-native";
 import { formatoMonedaChileno, fetchWithTimeout } from "../Components/util";
+import Loader from "../Components/Loader";
+import { REACT_APP_SV } from "@env"
 
 const RealizarPedido = ({ navigation, route }) => {
 
@@ -27,21 +29,23 @@ const RealizarPedido = ({ navigation, route }) => {
                 headers: { 'Content-Type': 'application/json' },
                 timeout: 5000
             };
-            var url = 'http://192.168.1.114:4000/api/producto/'
+            var url = REACT_APP_SV + '/api/producto/'
+            console.log("🚀 ~ file: Venta.js ~ line 32 ~ cargaProductos ~ url", url)
+
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
                     json.forEach(element => {
                         element.Cantidad = 0
                     });
-                    console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0", json)
+                    console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
                     setProducts(json)
                     setLoading(false)
                 })
 
         } catch (error) {
             setLoading(false)
-            Alert.alert("ERROR", "No se han podido cargar los productos",)
+            Alert.alert("ERROR", "No se han podido cargar los productos")
         }
     }
 
@@ -90,70 +94,71 @@ const RealizarPedido = ({ navigation, route }) => {
         console.log("Limpia")
     }
 
+    
+
     {
         if (loading) {
+        
             return (
-                <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                    <Image source={require("./../assets/Images/spin2balls.gif")} />
-                    <Text style={{ marginTop: 30, fontSize: 17 }}>Cargando Productos...</Text>
-                </View>
-
+                Loader("Cargando Productos...")
             )
         } else {
             return (
 
                 <View style={{ flex: 1 }}>
-                    <ScrollView style={styles.scrollView}>
-                        {
+                    <View style={{ flex: 5 }}>
+                        <ScrollView>
+                            {
 
-                            products.map((item, index) => {
-
-
-
-                                return (
-                                    <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => agregarQuitarItem(item, true)}>
-                                        <Image
-                                            source={require("../assets/Images/bidon.png")}
-                                            style={styles.image}
-                                        />
-                                        <View style={{ flex: 2 }}>
-                                            <Text style={styles.textName}>{item.Nombre}</Text>
-                                            <Text style={{ fontSize: 14, marginLeft: 10, color: "gray" }}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
-                                        </View>
-                                        <View style={styles.textPrecio}>
+                                products.map((item, index) => {
 
 
-                                            {item.Cantidad > 0 ?
-                                                <View style={{ flexDirection: "row" }}>
-                                                    <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, false)}>
-                                                        <Text style={styles.TextoBotonAgregarQuitar}>
-                                                            -
-                                                        </Text>
-                                                    </Pressable>
 
-                                                    <TouchableOpacity>
-                                                        <Text style={styles.TextCantidad}>{item.Cantidad}</Text>
-                                                    </TouchableOpacity>
+                                    return (
+                                        <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => agregarQuitarItem(item, true)}>
+                                            <Image
+                                                source={require("../assets/Images/bidon.png")}
+                                                style={styles.image}
+                                            />
+                                            <View style={{ flex: 2 }}>
+                                                <Text style={styles.textName}>{item.Nombre}</Text>
+                                                <Text style={{ fontSize: 14, marginLeft: 10, color: "gray" }}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
+                                            </View>
+                                            <View style={styles.textPrecio}>
 
 
-                                                    <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, true)}>
-                                                        <Text style={styles.TextoBotonAgregarQuitar}>
-                                                            +
-                                                        </Text>
-                                                    </Pressable>
+                                                {item.Cantidad > 0 ?
+                                                    <View style={{ flexDirection: "row" }}>
+                                                        <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, false)}>
+                                                            <Text style={styles.TextoBotonAgregarQuitar}>
+                                                                -
+                                                            </Text>
+                                                        </Pressable>
 
-                                                </View>
-                                                :
-                                                <></>
-                                            }
-                                        </View>
+                                                        <TouchableOpacity>
+                                                            <Text style={styles.TextCantidad}>{item.Cantidad}</Text>
+                                                        </TouchableOpacity>
 
-                                    </TouchableOpacity>
-                                )
-                            })
-                        }
-                    </ScrollView>
-                    <View style={{ flex: 3 }}>
+
+                                                        <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, true)}>
+                                                            <Text style={styles.TextoBotonAgregarQuitar}>
+                                                                +
+                                                            </Text>
+                                                        </Pressable>
+
+                                                    </View>
+                                                    :
+                                                    <></>
+                                                }
+                                            </View>
+
+                                        </TouchableOpacity>
+                                    )
+                                })
+                            }
+                        </ScrollView>
+                    </View>
+                    <View style={{ flex: 1 }}>
                         {contItem > 1 ?
                             <Pressable style={styles.BotonSgte} onPress={() => Siguiente()} >
                                 <Text style={styles.TextoBotonSgte}>{contItem + " Items ($ " + formatoMonedaChileno(total) + ")"}</Text>
@@ -180,7 +185,7 @@ export default RealizarPedido;
 const styles = StyleSheet.create({
 
     itemContainer: {
-        flex: 1,
+        //flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
         marginLeft: 10,
@@ -205,14 +210,11 @@ const styles = StyleSheet.create({
         alignItems: "flex-end",
         marginRight: 10
     },
-    scrollView: {
-        maxHeight: 670,
-    },
     BotonSgte: {
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 32,
+        //paddingVertical: 12,
+        //paddingHorizontal: 32,
         borderRadius: 4,
         elevation: 3,
         backgroundColor: '#00a8a8',
