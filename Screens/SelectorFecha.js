@@ -3,6 +3,7 @@ import { SafeAreaView, StyleSheet, Text, View, TextInput, Pressable } from 'reac
 import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { formatDateString } from "../Components/util";
+import { useFonts } from 'expo-font'
 
 const SelectorFecha = ({ navigation }) => {
 
@@ -13,6 +14,15 @@ const SelectorFecha = ({ navigation }) => {
     const [datePickerHasta, setDatePickerHasta] = useState(false);
     const [dateHasta, setDateHasta] = useState(new Date());
     const [dateHastaStr, setDateHastaStr] = useState(formatDateString(new Date(), true));
+
+    const [fontsLoaded] = useFonts({
+        PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
+        PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
+        PromptLight: require("./../assets/fonts/Prompt-Light.ttf"),
+        PromptRegular: require("./../assets/fonts/Prompt-Regular.ttf"),
+        PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
+        PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
+    })
 
     const showDatePickerDesde = () => {
         setDatePickerDesde(true);
@@ -39,6 +49,8 @@ const SelectorFecha = ({ navigation }) => {
     const AplicaFiltro = () => {
         navigation.navigate("Estadisticas", { fechas: JSON.stringify({ FechaInicio: dateDesde, FechaFin: dateHasta }) })
     }
+
+    if (!fontsLoaded) return null
 
     return (
         <SafeAreaView style={{ flex: 1 }}>
@@ -125,7 +137,8 @@ const styles = StyleSheet.create({
         width: 250,
         textAlign: 'center',
         marginTop: 20,
-        fontSize: 20
+        fontSize: 20,
+        fontFamily:"PromptRegular"
     },
     TextoTitulo: {
         fontSize: 25
@@ -144,11 +157,11 @@ const styles = StyleSheet.create({
         marginTop: 100
     },
     TextoAplicarFiltro: {
-        fontSize: 16,
+        fontSize: 20,
         lineHeight: 21,
-        fontWeight: 'bold',
         letterSpacing: 0.25,
         color: 'white',
+        fontFamily:"PromptSemiBold"
     },
     // Style for iOS ONLY...
     datePicker: {

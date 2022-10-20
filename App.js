@@ -8,17 +8,71 @@ import DetalleVentaScreen from './Screens/DetalleVenta';
 import SelectorFechaScreen from './Screens/SelectorFecha';
 import VentaOkScreen from './Screens/VentaOk';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { useFonts } from 'expo-font'
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
 
 function Root() {
+  const [fontsLoaded] = useFonts({
+    PromptThin: require("./assets/fonts/Prompt-Thin.ttf"),
+    PromptExtraLight: require("./assets/fonts/Prompt-ExtraLight.ttf"),
+    PromptLight: require("./assets/fonts/Prompt-Light.ttf"),
+    PromptRegular: require("./assets/fonts/Prompt-Regular.ttf"),
+    PromptMedium: require("./assets/fonts/Prompt-Medium.ttf"),
+    PromptSemiBold: require("./assets/fonts/Prompt-SemiBold.ttf"),
+  })
+
+  if (!fontsLoaded) return null
+
   return (
     <Drawer.Navigator>
-      <Drawer.Screen name="Venta" component={VentaScreen} options={{ headerTitle: "Ingresar Venta", title:"Venta" }} />
-      <Drawer.Screen name="Historial" component={HistorialScreen} options={{ headerTitle: "Historial de Ventas", title:"Historial de Ventas" }} />
-      <Drawer.Screen options={{ title: 'Estadísticas', headerTitle: "Seleccione Período" }} name="SelectorFecha" component={SelectorFechaScreen} />
-      
+      <Drawer.Screen
+        name="Venta"
+        component={VentaScreen}
+        options={
+          {
+            headerTitle: "Ingresar Venta",
+            title: "Venta",
+            headerTitleStyle: {
+              fontFamily: "PromptSemiBold"
+            },
+            drawerLabelStyle: {
+              fontFamily: "PromptRegular",
+              fontSize:20
+            }
+          }} />
+      <Drawer.Screen
+        name="Historial"
+        component={HistorialScreen}
+        options={
+          {
+            headerTitle: "Historial de Ventas",
+            title: "Historial de Ventas",
+            headerTitleStyle: {
+              fontFamily: "PromptSemiBold"
+            },
+            drawerLabelStyle: {
+              fontFamily: "PromptRegular",
+              fontSize:20
+            }
+          }} />
+      <Drawer.Screen
+        options={
+          {
+            title: 'Estadísticas',
+            headerTitle: "Seleccione Período",
+            headerTitleStyle: {
+              fontFamily: "PromptSemiBold"
+            },
+            drawerLabelStyle: {
+              fontFamily: "PromptRegular",
+              fontSize:20
+            }
+          }}
+        name="SelectorFecha"
+        component={SelectorFechaScreen} />
+
     </Drawer.Navigator>
   );
 }
@@ -28,9 +82,9 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator>
         <Stack.Screen name="Root" component={Root} options={{ headerShown: false }} />
-        <Stack.Screen options={{ title: 'Detalle Venta' }} name="DetalleVenta" component={DetalleVentaScreen} />
-        <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title:"Estadísticas" }} />
-        <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{headerShown: false}} />
+        <Stack.Screen options={{ title: 'Detalle Venta', headerTitleStyle: { fontFamily: "PromptSemiBold" } }} name="DetalleVenta" component={DetalleVentaScreen} />
+        <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title: "Estadísticas", headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
+        <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

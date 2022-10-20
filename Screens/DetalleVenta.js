@@ -1,9 +1,10 @@
 import { View, Text, StyleSheet, Pressable, Alert, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native'
 import React, { useState } from 'react'
-import { ButtonGroup } from "@rneui/themed";
+import { ButtonGroup, Input, Button } from "@rneui/themed";
 import { formatoMonedaChileno, getUTCDate } from "../Components/util";
+import Loader from "./../Components/Loader"
 import { REACT_APP_SV } from "@env"
-
+import { useFonts } from 'expo-font'
 
 const DetallePedido = ({ navigation, route }) => {
 
@@ -24,6 +25,15 @@ const DetallePedido = ({ navigation, route }) => {
     const [PrecioTotal, setPrecioTotal] = useState(totalTemp)
     const [PrecioTotalDcto, setPrecioTotalDcto] = useState(0)
     const [cargandoVenta, setCargandoVenta] = useState(false)
+    const [obs, setObs] = useState("")
+    const [fontsLoaded] = useFonts({
+        PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
+        PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
+        PromptLight: require("./../assets/fonts/Prompt-Light.ttf"),
+        PromptRegular: require("./../assets/fonts/Prompt-Regular.ttf"),
+        PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
+        PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
+    })
 
     //FUNCIONES
     const IngresaVenta = () => {
@@ -38,7 +48,8 @@ const DetallePedido = ({ navigation, route }) => {
                     PrecioTotalVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal,
                     Cliente_id: "1",
                     Fecha: getUTCDate(),
-                    Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0
+                    Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
+                    Observacion: obs === "" ? null : obs
                 },
                 ProductosVenta: Pedido
             })
@@ -76,7 +87,7 @@ const DetallePedido = ({ navigation, route }) => {
     const PrecioAnteriorTachado = () => {
         if (PrecioTotalDcto > 0) {
             return (<View style={{ flexDirection: "row", justifyContent: 'flex-end' }}>
-                <Text style={{ fontWeight: "bold", fontSize: 25, marginLeft: 5, textDecorationLine: "line-through" }}>{"$ " + formatoMonedaChileno(PrecioTotal)}</Text>
+                <Text style={styles.TextoPrecioTotalTachado}>{"$ " + formatoMonedaChileno(PrecioTotal)}</Text>
             </View>)
         }
         else {
@@ -85,103 +96,132 @@ const DetallePedido = ({ navigation, route }) => {
 
     }
 
-    return (
-        /* Principal */
-        <View style={styles.ViewPrincipal}>
-            <Modal
-                animationType="slide"
-                transparent={true}
-                visible={modalVisible}
-                onRequestClose={() => {
-                    Alert.alert("Modal has been closed.");
-                    setModalVisible(!modalVisible);
-                }}
-            >
-                <View style={styles.centeredView}>
-                    <View style={styles.modalView}>
-                        <View style={{ marginBottom: 10 }}>
-                            <Text style={styles.modalText}>Valor Fijo</Text>
-                            <TextInput keyboardType='number-pad' value={valorDcto} style={{ borderBottomWidth: 0.5 }} autoFocus={true} placeholder="$" onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }} />
+
+    {
+        if (cargandoVenta || !fontsLoaded) {
+            return (Loader("Ingresando Venta..."))
+        }
+        else {
+            return (
+                /* Principal */
+                <View style={styles.ViewPrincipal}>
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalVisible}
+                        onRequestClose={() => {
+                            setModalVisible(!modalVisible);
+                        }}
+                    >
+                        <View style={styles.centeredView}>
+                            <View style={styles.modalView}>
+                                <View style={{ marginBottom: 10 }}>
+                                    <Text style={styles.modalText}>Valor Fijo</Text>
+                                    <TextInput keyboardType='number-pad' value={valorDcto} style={{ borderBottomWidth: 0.5, fontFamily:"PromptLight" }} autoFocus={true} placeholder="$" onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }} />
+                                </View>
+                                <View style={{ marginBottom: 10 }}>
+                                    <Text style={styles.modalText}>Porcentaje</Text>
+                                    <TextInput keyboardType='number-pad' value={porcentajeDcto} style={{ borderBottomWidth: 0.5, fontFamily:"PromptLight" }} placeholder="%" onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }} />
+                                </View>
+                                <View style={{ marginBottom: 10 }}>
+                                    <Pressable style={styles.BotonAplicarDcto} onPress={() => AplicarDcto()}>
+                                        <Text style={styles.TextoAplicar}>Aplicar</Text>
+                                    </Pressable>
+                                </View>
+                            </View>
                         </View>
-                        <View style={{ marginBottom: 10 }}>
-                            <Text style={styles.modalText}>Porcentaje</Text>
-                            <TextInput keyboardType='number-pad' value={porcentajeDcto} style={{ borderBottomWidth: 0.5 }} placeholder="%" onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }} />
+
+
+                    </Modal>
+
+
+                    {/* Detalle Productos */}
+                    <View style={{ flex: 3 }}>
+                        <ScrollView>
+                            {
+                                Pedido.map((item, index) => {
+                                    return (
+                                        <View key={item._id} style={styles.ViewItem}>
+
+                                            <View style={{ flex: 1 }}>
+                                                <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
+                                            </View>
+
+                                            <View style={{ flex: 2 }}>
+                                                <Text style={styles.TextNombre}>{item.Nombre}</Text>
+                                                <Text style={styles.TextPrecioUnitario}>{"$ " + formatoMonedaChileno(item.Precio)}</Text>
+                                            </View>
+                                            <View style={{ flex: 1, alignItems: "flex-end" }}>
+                                                <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
+                                            </View>
+                                        </View>
+                                    )
+                                })
+                            }
+                        </ScrollView>
+
+                    </View>
+
+                    {/* total*/}
+                    <View style={{ flex: 1, alignItems: "flex-end", marginRight: 10 }}>
+
+                        {PrecioAnteriorTachado()}
+                        <View style={{ flexDirection: "row" }}>
+                            <Text style={{ fontSize: 25 }}>TOTAL:</Text>
+
+                            <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(PrecioTotalDcto === 0 ? PrecioTotal : PrecioTotalDcto)}</Text>
                         </View>
-                        <View style={{ marginBottom: 10 }}>
-                            <Pressable style={styles.BotonAplicarDcto} onPress={() => AplicarDcto()}>
-                                <Text style={styles.TextoFinalizar}>Aplicar</Text>
-                            </Pressable>
+                        <View style={{ flexDirection: "row" }}>
+                            <TouchableOpacity onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalVisible(true)}>
+                                <Text style={styles.TextDcto}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
+
+                    {/* mediopago */}
+                    <View style={{ flex: 1 }}>
+                        <ButtonGroup
+                            buttons={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
+                            selectedIndex={selectedIndex}
+                            onPress={(value) => {
+                                setSelectedIndex(value);
+                            }}
+                            containerStyle={{
+                                marginBottom: 20,
+                                borderColor: "#00a8a8"
+                            }}
+                            textStyle={{
+                                fontFamily: "PromptRegular"
+                            }}
+                            selectedButtonStyle={{
+                                backgroundColor: "#00a8a8"
+                            }}
+                        />
+                    </View>
+
+                    {/* observacion */}
+                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+                        <Input
+                            placeholder="Observación"
+                            leftIcon={{ type: 'font-awesome', name: 'comment' }}
+                            onChangeText={text => { setObs(text) }}
+                            style={{
+                                fontFamily: "PromptRegular"
+                            }}
+                        />
+                    </View>
+
+                    {/* BotonFinalizar */}
+                    <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+                        <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
+                            <Text style={styles.TextoFinalizar}>Finalizar</Text>
+                        </Pressable>
+                        
+                    </View>
                 </View>
-
-
-            </Modal>
-
-
-            {/* Detalle Productos */}
-            <View style={{ flex: 3 }}>
-                <ScrollView>
-                    {
-                        Pedido.map((item, index) => {
-                            return (
-                                <View key={item._id} style={styles.ViewItem}>
-
-                                    <View style={{ flex: 1 }}>
-                                        <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
-                                    </View>
-
-                                    <View style={{ flex: 2 }}>
-                                        <Text style={styles.TextNombre}>{item.Nombre}</Text>
-                                        <Text style={styles.TextPrecioUnitario}>{"$ " + formatoMonedaChileno(item.Precio)}</Text>
-                                    </View>
-                                    <View style={{ flex: 1, alignItems: "flex-end" }}>
-                                        <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
-                                    </View>
-                                </View>
-                            )
-                        })
-                    }
-                </ScrollView>
-
-            </View>
-
-            {/* total*/}
-            <View style={{ flex: 1, alignItems: "flex-end", marginRight: 10 }}>
-
-                {PrecioAnteriorTachado()}
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={{ fontSize: 25 }}>TOTAL:</Text>
-
-                    <Text style={{ fontWeight: "bold", fontSize: 25, marginLeft: 5 }}>{"$ " + formatoMonedaChileno(PrecioTotalDcto === 0 ? PrecioTotal : PrecioTotalDcto)}</Text>
-                </View>
-                <View style={{ flexDirection: "row" }}>
-                    <TouchableOpacity onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalVisible(true)}>
-                        <Text style={{ fontSize: 20, textDecorationLine: 'underline', color: "#00a8a8" }}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
-                    </TouchableOpacity>
-                </View>
-            </View>
-
-            {/* mediopago */}
-            <View style={{ flex: 1 }}>
-                <ButtonGroup
-                    buttons={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
-                    selectedIndex={selectedIndex}
-                    onPress={(value) => {
-                        setSelectedIndex(value);
-                    }}
-                    containerStyle={{ marginBottom: 20, borderColor: "#00a8a8" }}
-                />
-            </View>
-
-            {/* BotonFinalizar */}
-            <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
-                    <Text style={styles.TextoFinalizar}>Finalizar</Text>
-                </Pressable>
-            </View>
-        </View>
-    )
+            )
+        }
+    }
 }
 
 export default DetallePedido
@@ -226,7 +266,8 @@ const styles = StyleSheet.create({
     },
     modalText: {
         marginBottom: 15,
-        textAlign: "center"
+        textAlign: "center",
+        fontFamily:"PromptRegular"
     }
     ,
     ViewPrincipal: {
@@ -244,7 +285,7 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 32,
         borderRadius: 4,
-        elevation: 3,
+        elevation: 7,
         backgroundColor: '#00a8a8',
         height: 60,
         marginHorizontal: 5
@@ -258,28 +299,48 @@ const styles = StyleSheet.create({
         padding: 10
     },
     TextNombre: {
+        fontFamily: "PromptRegular",
         fontSize: 18
     },
     TextPrecioUnitario: {
+        fontFamily: "PromptLight",
         fontSize: 14,
         color: "gray"
     },
     TextCantidad: {
-        fontWeight: "bold",
+        fontFamily: "PromptMedium",
         fontSize: 20
     },
     TextPrecioSubtotal: {
+        fontFamily: "PromptRegular",
         fontSize: 20
     },
     TextPrecioTotal: {
         fontSize: 25,
-        fontFamily: "bold"
+        fontFamily: "PromptMedium",
+        marginLeft: 5
+    },
+    TextoPrecioTotalTachado: { 
+        fontFamily:"PromptMedium", 
+        fontSize: 25, 
+        marginLeft: 5, 
+        textDecorationLine: "line-through" 
+    },
+    TextDcto: {
+        fontSize: 16,
+        textDecorationLine: 'underline',
+        color: "#00a8a8",
+        fontFamily: "PromptLight"
+    },
+    TextoAplicar: {
+        fontSize: 15,
+        color: 'white',
+        fontFamily: "PromptSemiBold"
     },
     TextoFinalizar: {
-        fontSize: 16,
-        lineHeight: 21,
-        fontWeight: 'bold',
+        fontSize: 25,
         letterSpacing: 0.25,
         color: 'white',
-    },
+        fontFamily: "PromptSemiBold"
+    }
 })

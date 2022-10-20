@@ -2,15 +2,26 @@ import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Button, Alert } from "react-native";
 import { formatoMonedaChileno, formatDateString, fetchWithTimeout } from "../Components/util";
 import Loader from "../Components/Loader";
+import ModalComp from './../Components/Modal'
 import { useIsFocused } from "@react-navigation/native";
 import { REACT_APP_SV } from "@env"
 import moment from "moment";
+import { useFonts } from 'expo-font'
 
 const Historial = ({ props }) => {
 
     const isFocused = useIsFocused();
     const [Ventas, SetVentas] = useState([])
     const [loading, setLoading] = useState(true)
+    const [modalVisible, setModalVisible] = useState(false)
+    const [fontsLoaded] = useFonts({
+        PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
+        PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
+        PromptLight: require("./../assets/fonts/Prompt-Light.ttf"),
+        PromptRegular: require("./../assets/fonts/Prompt-Regular.ttf"),
+        PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
+        PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
+    })
 
     useEffect(() => {
         var RO = {
@@ -47,9 +58,9 @@ const Historial = ({ props }) => {
                     }
                     setLoading(false)
                 })
-                /* .catch((e)=>{
-                    console.log(e)
-                }) */
+            /* .catch((e)=>{
+                console.log(e)
+            }) */
         } catch (error) {
             setLoading(false)
             Alert.alert("ERROR", "No se ha podido cargar el historial ", error.toString())
@@ -60,14 +71,14 @@ const Historial = ({ props }) => {
     const encabezado = (FechaTitulo, NroVentasDia, SumaVentasDia) => {
         return (
             <View>
-                <Text style={styles.textName}>{FechaTitulo}</Text>
-                <Text>{NroVentasDia + " Ventas - Total: $ " + formatoMonedaChileno(SumaVentasDia)}</Text>
+                <Text style={styles.textFecha}>{FechaTitulo}</Text>
+                <Text style={styles.textResumen}>{NroVentasDia + " Ventas - Total: $ " + formatoMonedaChileno(SumaVentasDia)}</Text>
             </View>
         )
     }
 
     {
-        if (loading) {
+        if (loading || !fontsLoaded) {
 
             return (
                 Loader("Recuperando Ventas...")
@@ -82,6 +93,12 @@ const Historial = ({ props }) => {
         else {
             return (
                 <View>
+                    {/* <Button onPress={() => setModalVisible(true)} title={"Modal"} />
+
+                    <ModalComp modalVisible={modalVisible}>
+                        <Text>alsdjaljhfjkdsfksd</Text>
+                    </ModalComp> */}
+
                     <ScrollView style={styles.scrollView}>
 
                         {Ventas.map((item, index) => {
@@ -99,32 +116,42 @@ const Historial = ({ props }) => {
                                 FechaTitulo = "Ayer"
                             } else {
                                 FechaTitulo = formatDateString(moment(FechaVenta).format("YYYY-MM-DD"), true);
-                                console.log("🚀 ~ file: Historial.js ~ line 106 ~ {Ventas.map ~ FechaVenta", FechaVenta)
+                                //FechaTitulo = moment(FechaVenta).format("YYYY-MM-DD")
+                                //console.log("🚀 ~ file: Historial.js ~ line 114 ~ {Ventas.map ~ moment(FechaVenta).format(YYYY-MM-DD)", moment(FechaVenta).format("YYYY-MM-DD"))
                             }
-                            /* console.log("FechaVenta", new Date(item.FechaVenta))
-                            console.log("FechaTitulo", FechaTitulo) */
+
                             return (
                                 <View key={index}>
                                     {encabezado(FechaTitulo, item.NroVentas, item.SumaVentas)}
                                     {item.Ventas.map((item2, index2) => {
 
                                         let hora = moment(item2.Fecha).format("HH:mm")
-                                        /* console.log("🚀 ~ file: Historial.js ~ line 111 ~ {item.Ventas.map ~ horaOriginal BD", horaOriginal)
-                                        console.log("🚀 ~ file: Historial.js ~ line 110 ~ {item.Ventas.map ~ hora", hora)
-                                        console.log("🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀🚀") */
+                                        //console.log("🚀 ~ file: Historial.js ~ line 121 ~ obs ~ item", item)
+                                        const obs = () => {
+                                            if (item2.Observacion) {
+                                                return (<View style={{ flexDirection: "row" }}>
+                                                    <Text style={styles.textObs}>Obs:</Text>
+                                                    <Text style={styles.textObs}>{item2.Observacion}</Text>
+                                                </View>)
+                                            } else {
+                                                return (<></>)
+                                            }
+
+                                        }
 
                                         return (
                                             <View key={index2}>
                                                 <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
                                                     <View style={{ flex: 2 }}>
-                                                        <Text style={styles.textName}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
+                                                        <Text style={styles.textMontoVentaUnitaria}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
                                                         <View style={{ flexDirection: "row" }}>
-                                                            <Text style={styles.textName}>Cliente: </Text>
-                                                            <Text style={{ fontSize: 17 }}>{item2.Cliente}</Text>
+                                                            <Text style={styles.textCliente}>Cliente: </Text>
+                                                            <Text style={ styles.textCliente }>{item2.Cliente}</Text>
                                                         </View>
+                                                        {obs()}
                                                     </View>
                                                     <View style={styles.textPrecio}>
-                                                        <Text>{hora}</Text>
+                                                        <Text style={{fontFamily:"PromptLight"}}>{hora}</Text>
                                                     </View>
                                                 </TouchableOpacity>
                                             </View>
@@ -134,53 +161,7 @@ const Historial = ({ props }) => {
                             )
                         })}
 
-                        {/* 
-        
-                        <Text style={styles.textName}>Ayer</Text>
-                        <Text>2 Ventas - Total: $87.000</Text>
-        
-        
-        
-        
-                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                            <View style={{ flex: 2 }}>
-                                <Text style={styles.textName}>$47.000</Text>
-                                <View style={{ flexDirection: "row" }}>
-                                    <Text style={styles.textName}>Cliente: </Text>
-                                    <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
-                                </View>
-                            </View>
-                            <View style={styles.textPrecio}>
-                                <Text>19:38</Text>
-                            </View>
-                        </TouchableOpacity>
-                        <Text style={styles.textFecha}>Ayer</Text>
-                        <Text>2 Ventas - Total: $87.000</Text>
-                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                            <View style={{ flex: 2 }}>
-                                <Text style={styles.textName}>$40.000</Text>
-                                <View style={{ flexDirection: "row" }}>
-                                    <Text style={styles.textName}>Cliente: </Text>
-                                    <Text style={{ fontSize: 17 }}>Juan Perez</Text>
-                                </View>
-                            </View>
-                            <View style={styles.textPrecio}>
-                                <Text>20:20</Text>
-                            </View>
-        
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                            <View style={{ flex: 2 }}>
-                                <Text style={styles.textName}>$47.000</Text>
-                                <View style={{ flexDirection: "row" }}>
-                                    <Text style={styles.textName}>Cliente: </Text>
-                                    <Text style={{ fontSize: 17 }}>Carlos Muñoz</Text>
-                                </View>
-                            </View>
-                            <View style={styles.textPrecio}>
-                                <Text>19:38</Text>
-                            </View>
-                        </TouchableOpacity> */}
+
                     </ScrollView>
 
                 </View>
@@ -210,14 +191,29 @@ const styles = StyleSheet.create({
         borderRadius: 25,
         flex: 0.4
     },
-    textName: {
-        fontSize: 17,
-        fontWeight: "600",
-    },
     textFecha: {
-        fontSize: 17,
-        fontWeight: "600",
-        marginTop: 10
+        fontSize: 21,
+        //fontWeight: "600",
+        fontFamily:"PromptMedium"
+    },
+    textResumen: {
+        fontSize: 13,
+        //fontWeight: "600",
+        fontFamily:"PromptExtraLight"
+    },
+    textMontoVentaUnitaria: {
+        fontSize: 20,
+        //fontWeight: "600",
+        fontFamily:"PromptRegular"
+    },
+    textCliente: {
+        fontSize: 16,
+        //fontWeight: "600",
+        fontFamily:"PromptLight"
+    },
+    textObs:{
+        fontSize: 13,
+        fontFamily:"PromptExtraLight"
     },
     textPrecio: {
         flex: 0.5,

@@ -1,4 +1,5 @@
 import React from 'react'
+import moment from 'moment'
 
 export default function formatDate(date) {
     var d = new Date(date),
@@ -33,19 +34,26 @@ export const formatDateString = (date, abreviado) => {
     const meses = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"]
 
     let mes = abreviado ? mesesAbreviados[new Date(date).getMonth()] : meses[new Date(date).getMonth()]
+
     return (
-        new Date(date).getDate() +
+        moment(date).local(true).format("DD")
+        +
         " de " +
         mes
         +
         " de "
-        + new Date(date).getFullYear()
+        + moment(date).local(true).format("YYYY")
     )
 }
 
 export const formatoMonedaChileno = (value) => {
-    let format = value.toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1.")
-    return format
+    if (!value) {
+        return value
+    } else {
+        let format = value.toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1.")
+        return format
+    }
+
 }
 
 export async function fetchWithTimeout(resource, options = {}) {
