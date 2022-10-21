@@ -7,6 +7,7 @@ import EstadisticasScreen from './Screens/Estadisticas';
 import DetalleVentaScreen from './Screens/DetalleVenta';
 import SelectorFechaScreen from './Screens/SelectorFecha';
 import VentaOkScreen from './Screens/VentaOk';
+import DetalleEstadisticaScreen from './Screens/DetalleEstadistica'
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font'
 
@@ -85,6 +86,7 @@ export default function App() {
         <Stack.Screen options={{ title: 'Detalle Venta', headerTitleStyle: { fontFamily: "PromptSemiBold" } }} name="DetalleVenta" component={DetalleVentaScreen} />
         <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title: "Estadísticas", headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
         <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
+        <Stack.Screen name="DetalleEstadistica" component={DetalleEstadisticaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Detalle", }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

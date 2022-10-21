@@ -158,8 +158,6 @@ const styles = StyleSheet.create({
     },
     TextoAplicarFiltro: {
         fontSize: 20,
-        lineHeight: 21,
-        letterSpacing: 0.25,
         color: 'white',
         fontFamily:"PromptSemiBold"
     },

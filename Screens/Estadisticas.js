@@ -1,6 +1,7 @@
-import { View, Text, Pressable, StyleSheet, Alert } from 'react-native'
+import { View, Text, Pressable, StyleSheet, Alert, TouchableHighlight } from 'react-native'
 import React, { useEffect, useState } from 'react'
 import { formatDateYYYYMMDD, formatDateString, formatoMonedaChileno } from './../Components/util'
+import Loader from '../Components/Loader'
 import { REACT_APP_SV } from "@env"
 import { useFonts } from 'expo-font'
 
@@ -8,6 +9,7 @@ const Estadisticas = ({ navigation, route }) => {
 
   const fechas = JSON.parse(route.params.fechas)
   const [estadisticas, setEstadisticas] = useState({})
+  const [loading, setLoading] = useState(false)
   const [fontsLoaded] = useFonts({
     PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
     PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
@@ -18,6 +20,9 @@ const Estadisticas = ({ navigation, route }) => {
   })
 
   useEffect(() => {
+
+    setLoading(true)
+
     var RO = {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
@@ -32,6 +37,7 @@ const Estadisticas = ({ navigation, route }) => {
         if (json.length > 0) {
           console.log("🚀 ~ file: Estadisticas.js ~ line 25 ~ useEffect ~ json", json[0])
           setEstadisticas(json[0])
+          setLoading(false)
         } else {
           throw new Error("Se produjo un error al obtener los datos")
         }
@@ -42,7 +48,7 @@ const Estadisticas = ({ navigation, route }) => {
       })
   }, [])
 
-  if (!fontsLoaded) return null
+  if (!fontsLoaded || loading) return Loader("Cargando Estadísticas")
 
   return (
 
@@ -78,15 +84,15 @@ const Estadisticas = ({ navigation, route }) => {
         <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.GananciaVentas)}</Text>
       </View>
 
-      <View style={{ marginTop: 15 }}>
+      <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
         <Text style={styles.TextoTitulos}>Productos Más Vendidos</Text>
         <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas.MasVendidos[0].nombre : ""}</Text>
-      </View>
+      </Pressable>
 
-      <View style={{ marginTop: 15 }}>
+      <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
         <Text style={styles.TextoTitulos}>Medios de Pago Más Utilizados</Text>
         <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas.MediosDePago[0].mediopago : ""}</Text>
-      </View>
+      </Pressable>
 
     </View>
   )
@@ -99,7 +105,7 @@ const styles = StyleSheet.create(
     TextoFechas: {
       fontSize: 15,
       //fontWeight: "bold",
-      color: "#00a8a8",
+      color: "grey",
       fontFamily: "PromptRegular"
     },
     TextoTitulos: {
@@ -118,12 +124,12 @@ const styles = StyleSheet.create(
       justifyContent: 'center',
       paddingVertical: 12,
       paddingHorizontal: 32,
-      borderRadius: 4,
-      elevation: 2,
+      borderRadius: 2,
+      elevation: 1,
       height: 60,
       marginHorizontal: 20,
       marginTop: 10,
-      shadowColor:"#00a8a8"
+      shadowColor: "black"
     },
   }
 )

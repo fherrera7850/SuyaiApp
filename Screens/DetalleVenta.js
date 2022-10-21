@@ -117,11 +117,11 @@ const DetallePedido = ({ navigation, route }) => {
                             <View style={styles.modalView}>
                                 <View style={{ marginBottom: 10 }}>
                                     <Text style={styles.modalText}>Valor Fijo</Text>
-                                    <TextInput keyboardType='number-pad' value={valorDcto} style={{ borderBottomWidth: 0.5, fontFamily:"PromptLight" }} autoFocus={true} placeholder="$" onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }} />
+                                    <TextInput keyboardType='number-pad' value={valorDcto} style={{ borderBottomWidth: 0.5, fontFamily: "PromptLight" }} autoFocus={true} placeholder="$" onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }} />
                                 </View>
                                 <View style={{ marginBottom: 10 }}>
                                     <Text style={styles.modalText}>Porcentaje</Text>
-                                    <TextInput keyboardType='number-pad' value={porcentajeDcto} style={{ borderBottomWidth: 0.5, fontFamily:"PromptLight" }} placeholder="%" onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }} />
+                                    <TextInput keyboardType='number-pad' value={porcentajeDcto} style={{ borderBottomWidth: 0.5, fontFamily: "PromptLight" }} placeholder="%" onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }} />
                                 </View>
                                 <View style={{ marginBottom: 10 }}>
                                     <Pressable style={styles.BotonAplicarDcto} onPress={() => AplicarDcto()}>
@@ -141,7 +141,7 @@ const DetallePedido = ({ navigation, route }) => {
                             {
                                 Pedido.map((item, index) => {
                                     return (
-                                        <View key={item._id} style={styles.ViewItem}>
+                                        <Pressable key={item._id} style={styles.ViewItem} onPress={() => console.log(item)}>
 
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
@@ -154,7 +154,7 @@ const DetallePedido = ({ navigation, route }) => {
                                             <View style={{ flex: 1, alignItems: "flex-end" }}>
                                                 <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
                                             </View>
-                                        </View>
+                                        </Pressable>
                                     )
                                 })
                             }
@@ -167,7 +167,7 @@ const DetallePedido = ({ navigation, route }) => {
 
                         {PrecioAnteriorTachado()}
                         <View style={{ flexDirection: "row" }}>
-                            <Text style={{ fontSize: 25 }}>TOTAL:</Text>
+                            <Text style={styles.TextPrecioTotal}>TOTAL:</Text>
 
                             <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(PrecioTotalDcto === 0 ? PrecioTotal : PrecioTotalDcto)}</Text>
                         </View>
@@ -216,7 +216,7 @@ const DetallePedido = ({ navigation, route }) => {
                         <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
                             <Text style={styles.TextoFinalizar}>Finalizar</Text>
                         </Pressable>
-                        
+
                     </View>
                 </View>
             )
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     modalText: {
         marginBottom: 15,
         textAlign: "center",
-        fontFamily:"PromptRegular"
+        fontFamily: "PromptRegular"
     }
     ,
     ViewPrincipal: {
@@ -320,11 +320,11 @@ const styles = StyleSheet.create({
         fontFamily: "PromptMedium",
         marginLeft: 5
     },
-    TextoPrecioTotalTachado: { 
-        fontFamily:"PromptMedium", 
-        fontSize: 25, 
-        marginLeft: 5, 
-        textDecorationLine: "line-through" 
+    TextoPrecioTotalTachado: {
+        fontFamily: "PromptMedium",
+        fontSize: 25,
+        marginLeft: 5,
+        textDecorationLine: "line-through"
     },
     TextDcto: {
         fontSize: 16,

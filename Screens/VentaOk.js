@@ -1,19 +1,30 @@
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native'
 import React from 'react'
 import { formatoMonedaChileno } from '../Components/util'
+import { useFonts } from 'expo-font'
 
 const VentaOk = ({ navigation, route }) => {
 
 
     const MontoVenta = route.params.MontoVenta
     console.log(MontoVenta)
+    const [fontsLoaded] = useFonts({
+        PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
+        PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
+        PromptLight: require("./../assets/fonts/Prompt-Light.ttf"),
+        PromptRegular: require("./../assets/fonts/Prompt-Regular.ttf"),
+        PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
+        PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
+    })
+
+    if (!fontsLoaded) return null
 
     return (
         <View style={{ flex: 1 }}>
             <View style={{ flex: 4, justifyContent: "center", alignItems: "center" }}>
                 <Image source={require("./../assets/Images/done.png")} style={{resizeMode: "center"}}/>
                 <Text style={styles.TextoListo}>Listo!</Text>
-                <Text>{"Monto Venta: $ " + formatoMonedaChileno(MontoVenta)}</Text>
+                <Text style={styles.TextoMontoVenta}>{"Monto Venta: $ " + formatoMonedaChileno(MontoVenta)}</Text>
             </View>
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
                 <Pressable style={styles.BotonSgte} onPress={() => navigation.navigate("Venta",{Retorno: true})}>
@@ -41,14 +52,18 @@ const styles = StyleSheet.create({
         width: "85%"
     },
     TextoBotonSgte: {
-        fontSize: 16,
-        lineHeight: 21,
-        fontWeight: 'bold',
-        letterSpacing: 0.25,
+        fontSize: 20,
         color: 'white',
+        fontFamily:"PromptSemiBold"
     },
     TextoListo:{
         fontSize:25,
-        fontStyle: "italic"
+        //fontStyle: "italic",
+        fontFamily:"PromptMedium"
+    },
+    TextoMontoVenta:
+    {
+        fontSize:20,
+        fontFamily:"PromptLight"
     }
 })
