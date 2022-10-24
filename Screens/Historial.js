@@ -24,6 +24,7 @@ const Historial = ({ props }) => {
     })
 
     useEffect(() => {
+        setLoading(true)
         var RO = {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },

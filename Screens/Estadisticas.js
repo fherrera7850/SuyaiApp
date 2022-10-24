@@ -43,6 +43,7 @@ const Estadisticas = ({ navigation, route }) => {
         }
       })
       .catch(err => {
+        setLoading(false)
         Alert.alert("ERROR", err.toString())
         console.error("Error: ", err);
       })

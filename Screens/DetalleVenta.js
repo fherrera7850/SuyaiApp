@@ -1,31 +1,44 @@
-import { View, Text, StyleSheet, Pressable, Alert, TouchableOpacity, Modal, TextInput, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, Pressable, Alert, TouchableOpacity, TextInput, ScrollView, Modal } from 'react-native'
 import React, { useState } from 'react'
-import { ButtonGroup, Input, Button } from "@rneui/themed";
-import { formatoMonedaChileno, getUTCDate } from "../Components/util";
+import { ButtonGroup, Input } from "@rneui/themed";
+import { formatoMonedaChileno, getUTCDate, fetchWithTimeout } from "../Components/util"
 import Loader from "./../Components/Loader"
 import { REACT_APP_SV } from "@env"
 import { useFonts } from 'expo-font'
+import Icon from 'react-native-vector-icons/FontAwesome'
 
 const DetallePedido = ({ navigation, route }) => {
 
     //OPERACIONES
-    const Pedido = route.params.pedido.filter((x) => {
+    let TempPedido = route.params.pedido.filter((x) => {
         return x.Cantidad > 0;
     });
     let totalTemp = 0;
-    Pedido.forEach(element => {
+    TempPedido.forEach(element => {
         totalTemp += (element.Precio * element.Cantidad)
     });
 
+    const [pedido, setPedido] = useState(TempPedido)
+
     //HOOKS
-    const [selectedIndex, setSelectedIndex] = useState(0);
-    const [modalVisible, setModalVisible] = useState(false);
-    const [valorDcto, setValorDcto] = useState("");
-    const [porcentajeDcto, setPorcentajeDcto] = useState("");
+    const [modalVisible, setModalVisible] = useState(false)
+    const [modalProductoVisible, setModalProductoVisible] = useState(false)
+
+    const [valorDcto, setValorDcto] = useState("")
+    const [porcentajeDcto, setPorcentajeDcto] = useState("")
+    const [obs, setObs] = useState("")
+    const [selectedIndex, setSelectedIndex] = useState(0)
+    const [habilitaDescuento, setHabilitaDescuento] = useState(false)
+
     const [PrecioTotal, setPrecioTotal] = useState(totalTemp)
     const [PrecioTotalDcto, setPrecioTotalDcto] = useState(0)
+
     const [cargandoVenta, setCargandoVenta] = useState(false)
-    const [obs, setObs] = useState("")
+
+    const [productoModificar, setProductoModificar] = useState({})
+    const [cantidadProductoModificar, setCantidadProductoModificar] = useState("")
+    const [precioProductoModificar, setPrecioProductoModificar] = useState("")
+
     const [fontsLoaded] = useFonts({
         PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
         PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
@@ -36,12 +49,13 @@ const DetallePedido = ({ navigation, route }) => {
     })
 
     //FUNCIONES
-    const IngresaVenta = () => {
+    const IngresaVenta = async () => {
         setCargandoVenta(true)
         console.log(getUTCDate())
         const ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            timeout:5000,
             body: JSON.stringify({
                 Venta: {
                     MedioPago: selectedIndex,
@@ -49,14 +63,14 @@ const DetallePedido = ({ navigation, route }) => {
                     Cliente_id: "1",
                     Fecha: getUTCDate(),
                     Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
-                    Observacion: obs === "" ? null : obs
+                    Observacion: obs.trim() === "" ? null : obs
                 },
-                ProductosVenta: Pedido
+                ProductosVenta: pedido
             })
         };
 
         console.log(REACT_APP_SV + '/api/venta/')
-        fetch(REACT_APP_SV + '/api/venta/', ROVenta)
+        await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
             .then(response => {
                 console.log("response.status", response.status)
                 if (response.status === 200) {
@@ -96,6 +110,49 @@ const DetallePedido = ({ navigation, route }) => {
 
     }
 
+    const SeleccionaProductoModificar = (item) => {
+        //Solo puede modificar si no hay dcto general aplicado
+        if (PrecioTotalDcto === 0) {
+            let producto = { ...item }
+            setProductoModificar(producto)
+            setCantidadProductoModificar(producto.Cantidad.toString())
+            setPrecioProductoModificar(producto.Precio.toString())
+            setModalProductoVisible(true)
+        }
+    }
+
+    const ModificarProducto = () => {
+        let carro = [...pedido]
+        let tmpProductoModificar = { ...productoModificar }
+        let totalTemp = 0
+        for (const key in carro) {
+            if (carro[key]._id === tmpProductoModificar._id) {
+                carro[key].Cantidad = cantidadProductoModificar
+                carro[key].Precio = precioProductoModificar
+            }
+            totalTemp += carro[key].Cantidad * carro[key].Precio
+        }
+        setPrecioTotal(totalTemp)
+        setPedido(carro)
+        setModalProductoVisible(false)
+        setHabilitaDescuento(true)
+    }
+
+    const ValidaDescuento = () => {
+        return (valorDcto.trim() === "" && porcentajeDcto.trim() === "") ||
+            parseInt(porcentajeDcto, 10) >= 100 ||
+            valorDcto >= PrecioTotal ||
+            isNaN(valorDcto) ||
+            isNaN(porcentajeDcto)
+    }
+
+    const ValidaModificarProducto = () => {
+        return cantidadProductoModificar.trim() === "" ||
+            precioProductoModificar.trim() === "" ||
+            isNaN(cantidadProductoModificar) ||
+            isNaN(precioProductoModificar)
+    }
+
 
     {
         if (cargandoVenta || !fontsLoaded) {
@@ -105,43 +162,167 @@ const DetallePedido = ({ navigation, route }) => {
             return (
                 /* Principal */
                 <View style={styles.ViewPrincipal}>
+                    {/* Modal Descuentos */}
                     <Modal
                         animationType="slide"
                         transparent={true}
                         visible={modalVisible}
                         onRequestClose={() => {
+                            console.log("Modal has been closed.");
                             setModalVisible(!modalVisible);
                         }}
                     >
                         <View style={styles.centeredView}>
+                            {/* MODALVIEW */}
                             <View style={styles.modalView}>
-                                <View style={{ marginBottom: 10 }}>
-                                    <Text style={styles.modalText}>Valor Fijo</Text>
-                                    <TextInput keyboardType='number-pad' value={valorDcto} style={{ borderBottomWidth: 0.5, fontFamily: "PromptLight" }} autoFocus={true} placeholder="$" onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }} />
+
+                                {/* HEADER */}
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalHeaderText}>Aplicar Descuento</Text>
+                                    <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => setModalVisible(!modalVisible)}>
+                                        <Icon name="close" size={20} />
+                                    </TouchableOpacity>
+
                                 </View>
-                                <View style={{ marginBottom: 10 }}>
-                                    <Text style={styles.modalText}>Porcentaje</Text>
-                                    <TextInput keyboardType='number-pad' value={porcentajeDcto} style={{ borderBottomWidth: 0.5, fontFamily: "PromptLight" }} placeholder="%" onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }} />
+
+                                {/* BODY */}
+                                <View style={styles.modalBody}>
+                                    <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                                        <Input
+                                            placeholder="Valor Fijo"
+                                            leftIcon={{ type: 'font-awesome', name: 'dollar' }}
+                                            onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }}
+                                            autoFocus={true}
+                                            keyboardType='number-pad'
+                                            style={{
+                                                fontFamily: "PromptExtraLight",
+                                                marginLeft: 10
+                                            }}
+                                            value={valorDcto}
+                                        />
+                                        <Input
+                                            placeholder="Porcentaje"
+                                            leftIcon={{ type: 'font-awesome', name: 'percent' }}
+                                            onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }}
+                                            autoFocus={true}
+                                            keyboardType='number-pad'
+                                            style={{
+                                                fontFamily: "PromptExtraLight",
+                                                marginLeft: 10
+                                            }}
+                                            value={porcentajeDcto}
+                                        />
+                                    </View>
+
                                 </View>
-                                <View style={{ marginBottom: 10 }}>
-                                    <Pressable style={styles.BotonAplicarDcto} onPress={() => AplicarDcto()}>
-                                        <Text style={styles.TextoAplicar}>Aplicar</Text>
-                                    </Pressable>
+
+                                {/* FOOTER */}
+                                <View style={styles.modalFooter}>
+                                    <View style={{ marginBottom: 10 }}>
+                                        <Pressable
+                                            disabled={ValidaDescuento()}
+                                            style={ValidaDescuento() ? styles.modalBotonAplicarDisabled : styles.modalBotonAplicar}
+                                            onPress={() => AplicarDcto()}>
+                                            <Text style={styles.modalButtonFooter}>Aplicar</Text>
+                                        </Pressable>
+                                    </View>
                                 </View>
+
+
+
                             </View>
                         </View>
 
 
                     </Modal>
 
+                    {/* Modal Editar Producto */}
+                    <Modal
+                        animationType="slide"
+                        transparent={true}
+                        visible={modalProductoVisible}
+                        onRequestClose={() => {
+                            console.log("Modal has been closed.");
+                            setModalProductoVisible(!modalProductoVisible);
+                        }}
+                    >
+                        <View style={styles.centeredView}>
+                            {/* MODALVIEW */}
+                            <View style={styles.modalView}>
+
+                                {/* HEADER */}
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalHeaderText}>{"Ítem: " + productoModificar.Nombre}</Text>
+                                    <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => setModalProductoVisible(false)}>
+                                        <Icon name="close" size={20} />
+                                    </TouchableOpacity>
+                                </View>
+
+                                {/* BODY */}
+                                <View style={styles.modalBody}>
+                                    <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                                        <Input
+                                            placeholder="Cantidad"
+                                            leftIcon={{ type: 'font-awesome', name: 'shopping-basket' }}
+                                            onChangeText={text => { setCantidadProductoModificar(text) }}
+                                            autoFocus={true}
+                                            keyboardType='number-pad'
+                                            style={{
+                                                fontFamily: "PromptExtraLight",
+                                                marginLeft: 10,
+                                                fontSize: 15
+                                            }}
+                                            value={cantidadProductoModificar}
+                                        />
+                                        <Input
+                                            placeholder="Precio Unitario"
+                                            leftIcon={{ type: 'font-awesome', name: 'dollar' }}
+                                            onChangeText={text => { setPrecioProductoModificar(text) }}
+                                            keyboardType='number-pad'
+                                            style={{
+                                                fontFamily: "PromptExtraLight",
+                                                marginLeft: 10,
+                                                fontSize: 15
+                                            }}
+                                            value={precioProductoModificar}
+                                        />
+                                    </View>
+
+                                </View>
+
+                                {/* FOOTER */}
+                                <View style={styles.modalFooter}>
+                                    <View style={{ marginBottom: 10, flexDirection: "row" }}>
+                                        <Pressable
+                                            disabled={
+                                                ValidaModificarProducto()
+                                            }
+                                            style={
+                                                ValidaModificarProducto() ?
+                                                    styles.modalBotonAplicarDisabled :
+                                                    styles.modalBotonAplicar
+                                            }
+                                            onPress={() => ModificarProducto()}>
+                                            <Text style={styles.modalButtonFooter}>Aplicar</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+
+
+
+                            </View>
+                        </View>
+
+
+                    </Modal>
 
                     {/* Detalle Productos */}
                     <View style={{ flex: 3 }}>
                         <ScrollView>
                             {
-                                Pedido.map((item, index) => {
+                                pedido.map((item, index) => {
                                     return (
-                                        <Pressable key={item._id} style={styles.ViewItem} onPress={() => console.log(item)}>
+                                        <Pressable key={item._id} style={styles.ViewItem} onPress={() => SeleccionaProductoModificar(item)}>
 
                                             <View style={{ flex: 1 }}>
                                                 <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
@@ -172,7 +353,9 @@ const DetallePedido = ({ navigation, route }) => {
                             <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(PrecioTotalDcto === 0 ? PrecioTotal : PrecioTotalDcto)}</Text>
                         </View>
                         <View style={{ flexDirection: "row" }}>
-                            <TouchableOpacity onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalVisible(true)}>
+                            <TouchableOpacity
+                                onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalVisible(true)}
+                                disabled={habilitaDescuento}>
                                 <Text style={styles.TextDcto}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
                             </TouchableOpacity>
                         </View>
@@ -230,23 +413,58 @@ const styles = StyleSheet.create({
     centeredView: {
         flex: 1,
         justifyContent: "center",
-        alignItems: "center",
-        marginTop: 22
+        alignItems: "center"
+    },
+    modalHeaderText: {
+        fontFamily: "PromptSemiBold",
+        fontSize: 16,
+        flex:2
     },
     modalView: {
-        margin: 20,
         backgroundColor: "white",
         borderRadius: 20,
-        padding: 35,
+        padding: 25,
+        elevation: 20,
+        width: "70%",
+    },
+    modalHeader: {
+        width: "100%",
+        alignItems: "flex-end",
+        flexDirection: "row",
+        paddingBottom: 20
+    },
+    modalBody: {
+        justifyContent: "center",
         alignItems: "center",
-        shadowColor: "#000",
-        shadowOffset: {
-            width: 0,
-            height: 2
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5
+        padding: 20,
+    },
+    modalFooter: {
+        justifyContent: "center",
+        alignItems: "flex-end",
+        width: "100%",
+        paddingTop: 20
+    },
+    modalBotonAplicar: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        padding: 10
+    },
+    modalBotonAplicarDisabled: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        padding: 10,
+        opacity: 0.5
+    },
+    modalButtonFooter: {
+        color: "white",
+        fontFamily: "PromptSemiBold",
+        fontSize: 15
     },
     button: {
         borderRadius: 20,
@@ -300,7 +518,7 @@ const styles = StyleSheet.create({
     },
     TextNombre: {
         fontFamily: "PromptRegular",
-        fontSize: 18
+        fontSize: 18,
     },
     TextPrecioUnitario: {
         fontFamily: "PromptLight",

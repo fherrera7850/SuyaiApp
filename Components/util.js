@@ -47,10 +47,12 @@ export const formatDateString = (date, abreviado) => {
 }
 
 export const formatoMonedaChileno = (value) => {
-    if (!value) {
+    let valueNumber = parseInt(value, 10)
+
+    if (value === undefined) {
         return value
     } else {
-        let format = value.toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1.")
+        let format = valueNumber.toFixed(0).replace(/(\d)(?=(\d\d\d)+(?!\d))/g, "$1.")
         return format
     }
 

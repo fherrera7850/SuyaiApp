@@ -22,12 +22,12 @@ const VentaOk = ({ navigation, route }) => {
     return (
         <View style={{ flex: 1 }}>
             <View style={{ flex: 4, justifyContent: "center", alignItems: "center" }}>
-                <Image source={require("./../assets/Images/done.png")} style={{resizeMode: "center"}}/>
+                <Image source={require("./../assets/Images/done.png")} style={{ resizeMode: "center" }} />
                 <Text style={styles.TextoListo}>Listo!</Text>
                 <Text style={styles.TextoMontoVenta}>{"Monto Venta: $ " + formatoMonedaChileno(MontoVenta)}</Text>
             </View>
             <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-                <Pressable style={styles.BotonSgte} onPress={() => navigation.navigate("Venta",{Retorno: true})}>
+                <Pressable style={styles.BotonSgte} onPress={() => navigation.navigate("Venta", { Retorno: true })}>
                     <Text style={styles.TextoBotonSgte}>Nueva Venta</Text>
                 </Pressable>
             </View>
@@ -54,16 +54,16 @@ const styles = StyleSheet.create({
     TextoBotonSgte: {
         fontSize: 20,
         color: 'white',
-        fontFamily:"PromptSemiBold"
+        fontFamily: "PromptSemiBold"
     },
-    TextoListo:{
-        fontSize:25,
+    TextoListo: {
+        fontSize: 25,
         //fontStyle: "italic",
-        fontFamily:"PromptMedium"
+        fontFamily: "PromptMedium"
     },
     TextoMontoVenta:
     {
-        fontSize:20,
-        fontFamily:"PromptLight"
+        fontSize: 20,
+        fontFamily: "PromptLight"
     }
 })

@@ -4,42 +4,58 @@ import { formatoMonedaChileno, fetchWithTimeout } from "../Components/util";
 import Loader from "../Components/Loader";
 import { REACT_APP_SV } from "@env"
 import { useFonts } from 'expo-font'
+import Icon from 'react-native-vector-icons/FontAwesome';
+import { Input } from "@rneui/themed";
+import cloneDeep from 'lodash.clonedeep';
 
 const RealizarPedido = ({ navigation, route }) => {
 
     const styles = StyleSheet.create({
-        modalText: {
-            marginBottom: 15,
-            textAlign: "center"
-        },
         centeredView: {
             flex: 1,
             justifyContent: "center",
-            alignItems: "center",
-            marginTop: 22
+            alignItems: "center"
+        },
+        modalHeaderText: {
+            fontFamily: "PromptSemiBold",
+            fontSize: 16
         },
         modalView: {
-            margin: 20,
             backgroundColor: "white",
             borderRadius: 20,
-            padding: 35,
-            alignItems: "center",
-            shadowColor: "#000",
-            shadowOffset: {
-                width: 0,
-                height: 2
-            },
-            shadowOpacity: 0.25,
-            shadowRadius: 4,
-            elevation: 5
+            padding: 25,
+            elevation: 20,
+            width: "70%",
         },
-        BotonAplicar: {
+        modalHeader: {
+            width: "100%",
+            alignItems: "flex-end",
+            flexDirection: "row",
+            paddingBottom: 20
+        },
+        modalBody: {
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 20,
+        },
+        modalFooter: {
+            justifyContent: "center",
+            alignItems: "flex-end",
+            width: "100%",
+            paddingTop: 20
+        },
+        modalBotonAplicar: {
             alignItems: 'center',
             justifyContent: 'center',
             borderRadius: 4,
             elevation: 3,
             backgroundColor: '#00a8a8',
             padding: 10
+        },
+        modalButtonFooter: {
+            color: "white",
+            fontFamily: "PromptSemiBold",
+            fontSize: 15
         },
         itemContainer: {
             //flex: 1,
@@ -55,7 +71,7 @@ const RealizarPedido = ({ navigation, route }) => {
             width: 50,
             height: 50,
             borderRadius: 25,
-            flex: 0.4
+            flex: 0.3
         },
         textName: {
             fontSize: 20,
@@ -123,14 +139,7 @@ const RealizarPedido = ({ navigation, route }) => {
             marginHorizontal: 10,
             color: "#00a8a8",
             fontSize: 16
-        },
-        TextoFinalizar: {
-            fontSize: 16,
-            lineHeight: 21,
-            fontWeight: 'bold',
-            letterSpacing: 0.25,
-            color: 'white',
-        },
+        }
     });
 
     const [products, setProducts] = useState([])
@@ -216,7 +225,8 @@ const RealizarPedido = ({ navigation, route }) => {
     }
 
     const Siguiente = () => {
-        navigation.navigate('DetalleVenta', { pedido: products })
+        let tmpProducts = cloneDeep(products)
+        navigation.navigate('DetalleVenta', { pedido: tmpProducts })
     }
 
     const Limpiar = () => {
@@ -231,15 +241,17 @@ const RealizarPedido = ({ navigation, route }) => {
     }
 
     const ModificaCantidad = () => {
-        let producto = itemProducto
-        let productos = products
-        let diferenciaCantidad = cantidad - producto.Cantidad
-        let totalTemp = total
-        totalTemp += itemProducto.Precio * (diferenciaCantidad)
+        let producto = {...itemProducto}
+        let productos = [...products]
+        let tmpCantidad = cloneDeep(cantidad)
+        let diferenciaCantidad = tmpCantidad - producto.Cantidad
+        let totalTemp = cloneDeep(total)
+        console.log("🚀 ~ file: Venta.js ~ line 248 ~ ModificaCantidad ~ totalTemp", totalTemp)
+        totalTemp += producto.Precio * (diferenciaCantidad)
 
         productos.forEach(element => {
             if (element._id === producto._id) {
-                element.Cantidad = cantidad
+                element.Cantidad = tmpCantidad
             }
         });
 
@@ -270,29 +282,47 @@ const RealizarPedido = ({ navigation, route }) => {
                         }}
                     >
                         <View style={styles.centeredView}>
-
+                            {/* MODALVIEW */}
                             <View style={styles.modalView}>
 
-                                {/* <View style={{ alignSelf:"flex-end"}}>
-                                <Pressable onPress={()=> setModalVisible(false)}>
-                                    <Text style={{fontSize:18, color: "black"}}>x</Text>
-                                </Pressable>
-                            </View> */}
-                                <View style={{ marginBottom: 10 }}>
-                                    <TextInput
-                                        keyboardType='number-pad'
-                                        value={cantidad}
-                                        style={{ borderBottomWidth: 0.5 }}
-                                        autoFocus={true}
-                                        placeholder={"Cantidad"}
-                                        onChangeText={text => { setCantidad(text) }}
-                                    />
+                                {/* HEADER */}
+                                <View style={styles.modalHeader}>
+                                    <Text style={styles.modalHeaderText}>Cambiar Cantidad</Text>
+                                    <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => setModalVisible(!modalVisible)}>
+                                        <Icon name="close" size={20} />
+                                    </TouchableOpacity>
+
                                 </View>
-                                <View style={{ marginBottom: 10 }}>
-                                    <Pressable style={styles.BotonAplicar} onPress={() => ModificaCantidad()}>
-                                        <Text style={{ color: "white" }}>Aplicar</Text>
-                                    </Pressable>
+
+                                {/* BODY */}
+                                <View style={styles.modalBody}>
+                                    <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                                        <Input
+                                            placeholder="Cantidad"
+                                            leftIcon={{ type: 'font-awesome', name: 'shopping-basket' }}
+                                            onChangeText={text => { setCantidad(text) }}
+                                            autoFocus={true}
+                                            keyboardType='number-pad'
+                                            style={{
+                                                fontFamily: "PromptExtraLight",
+                                                marginLeft: 10
+                                            }}
+                                        />
+                                    </View>
+
                                 </View>
+
+                                {/* FOOTER */}
+                                <View style={styles.modalFooter}>
+                                    <View style={{ marginBottom: 10 }}>
+                                        <Pressable style={styles.modalBotonAplicar} onPress={() => ModificaCantidad()}>
+                                            <Text style={styles.modalButtonFooter}>Aplicar</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
+
+
+
                             </View>
                         </View>
 
@@ -308,13 +338,12 @@ const RealizarPedido = ({ navigation, route }) => {
                                                 source={require("../assets/Images/bidon.png")}
                                                 style={styles.image}
                                             />
-                                            <View style={{ flex: 2 }}>
+                                            <View style={{ flex: 1 }}>
                                                 <Text style={styles.textName}>{item.Nombre}</Text>
                                                 <Text style={styles.textPrecioUnitario}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
                                             </View>
+                                            
                                             <View style={styles.textPrecio}>
-
-
                                                 {item.Cantidad > 0 ?
                                                     <View style={{ flexDirection: "row" }}>
                                                         <Pressable style={styles.BotonAgregarQuitar} onPress={() => agregarQuitarItem(item, false)}>
