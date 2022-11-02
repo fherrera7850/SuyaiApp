@@ -6,8 +6,11 @@ import HistorialScreen from './Screens/Historial';
 import EstadisticasScreen from './Screens/Estadisticas';
 import DetalleVentaScreen from './Screens/DetalleVenta';
 import SelectorFechaScreen from './Screens/SelectorFecha';
+import ClientesScreen from './Screens/Clientes';
 import VentaOkScreen from './Screens/VentaOk';
 import DetalleEstadisticaScreen from './Screens/DetalleEstadistica'
+import ClienteScreen from './Screens/Cliente'
+import SelectorDireccionClienteScreen from './Screens/SelectorDireccionCliente';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font'
 
@@ -73,6 +76,21 @@ function Root() {
           }}
         name="SelectorFecha"
         component={SelectorFechaScreen} />
+        <Drawer.Screen
+        options={
+          {
+            title: 'Clientes',
+            headerTitle: "Clientes",
+            headerTitleStyle: {
+              fontFamily: "PromptSemiBold"
+            },
+            drawerLabelStyle: {
+              fontFamily: "PromptRegular",
+              fontSize:20
+            }
+          }}
+        name="Clientes"
+        component={ClientesScreen} />
 
     </Drawer.Navigator>
   );
@@ -87,6 +105,8 @@ export default function App() {
         <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title: "Estadísticas", headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
         <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
         <Stack.Screen name="DetalleEstadistica" component={DetalleEstadisticaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Detalle", }} />
+        <Stack.Screen name="Cliente" component={ClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Cliente", }} />
+        <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "SelectorDireccionCliente", }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -4,10 +4,10 @@
     "slug": "SuyaiApp",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Images/AppymeIcontransp.png",
     "userInterfaceStyle": "light",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/Images/Appyme1transp.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

@@ -36,7 +36,7 @@ const DetallePedido = ({ navigation, route }) => {
     const [cargandoVenta, setCargandoVenta] = useState(false)
 
     const [productoModificar, setProductoModificar] = useState({})
-    const [cantidadProductoModificar, setCantidadProductoModificar] = useState("")
+    //const [cantidadProductoModificar, setCantidadProductoModificar] = useState("")
     const [precioProductoModificar, setPrecioProductoModificar] = useState("")
 
     const [fontsLoaded] = useFonts({
@@ -84,6 +84,7 @@ const DetallePedido = ({ navigation, route }) => {
                 }
             })
             .catch(err => {
+                setCargandoVenta(false)
                 Alert.alert("Error: ", "No se ha podido ingresar la venta");
             })
     }
@@ -115,7 +116,7 @@ const DetallePedido = ({ navigation, route }) => {
         if (PrecioTotalDcto === 0) {
             let producto = { ...item }
             setProductoModificar(producto)
-            setCantidadProductoModificar(producto.Cantidad.toString())
+            //setCantidadProductoModificar(producto.Cantidad.toString())
             setPrecioProductoModificar(producto.Precio.toString())
             setModalProductoVisible(true)
         }
@@ -127,7 +128,7 @@ const DetallePedido = ({ navigation, route }) => {
         let totalTemp = 0
         for (const key in carro) {
             if (carro[key]._id === tmpProductoModificar._id) {
-                carro[key].Cantidad = cantidadProductoModificar
+                //carro[key].Cantidad = cantidadProductoModificar
                 carro[key].Precio = precioProductoModificar
             }
             totalTemp += carro[key].Cantidad * carro[key].Precio
@@ -147,9 +148,8 @@ const DetallePedido = ({ navigation, route }) => {
     }
 
     const ValidaModificarProducto = () => {
-        return cantidadProductoModificar.trim() === "" ||
-            precioProductoModificar.trim() === "" ||
-            isNaN(cantidadProductoModificar) ||
+        return/*  cantidadProductoModificar.trim() === "" || */ precioProductoModificar.trim() === "" ||
+            //isNaN(cantidadProductoModificar) ||
             isNaN(precioProductoModificar)
     }
 
@@ -261,7 +261,7 @@ const DetallePedido = ({ navigation, route }) => {
                                 {/* BODY */}
                                 <View style={styles.modalBody}>
                                     <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
-                                        <Input
+                                        {/* <Input
                                             placeholder="Cantidad"
                                             leftIcon={{ type: 'font-awesome', name: 'shopping-basket' }}
                                             onChangeText={text => { setCantidadProductoModificar(text) }}
@@ -273,7 +273,7 @@ const DetallePedido = ({ navigation, route }) => {
                                                 fontSize: 15
                                             }}
                                             value={cantidadProductoModificar}
-                                        />
+                                        /> */}
                                         <Input
                                             placeholder="Precio Unitario"
                                             leftIcon={{ type: 'font-awesome', name: 'dollar' }}
