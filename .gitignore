@@ -11,6 +11,6 @@ npm-debug.*
 web-build/
 .env
 *.sql
-
+Environments.js
 # macOS
 .DS_Store

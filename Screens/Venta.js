@@ -71,7 +71,8 @@ const RealizarPedido = ({ navigation, route }) => {
             width: 50,
             height: 50,
             borderRadius: 25,
-            flex: 0.3
+            flex: 0.3,
+            resizeMode: 'contain',
         },
         textName: {
             fontSize: 20,
@@ -176,7 +177,8 @@ const RealizarPedido = ({ navigation, route }) => {
                 headers: { 'Content-Type': 'application/json' },
                 timeout: 5000
             };
-            var url = REACT_APP_SV + '/api/producto/'
+            var url = "https://bcknodesuyai-production.up.railway.app" + '/api/producto/'
+            console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
@@ -241,7 +243,7 @@ const RealizarPedido = ({ navigation, route }) => {
     }
 
     const ModificaCantidad = () => {
-        let producto = {...itemProducto}
+        let producto = { ...itemProducto }
         let productos = [...products]
         let tmpCantidad = cloneDeep(cantidad)
         let diferenciaCantidad = tmpCantidad - producto.Cantidad
@@ -342,7 +344,7 @@ const RealizarPedido = ({ navigation, route }) => {
                                                 <Text style={styles.textName}>{item.Nombre}</Text>
                                                 <Text style={styles.textPrecioUnitario}>{"$" + formatoMonedaChileno(item.Precio)}</Text>
                                             </View>
-                                            
+
                                             <View style={styles.textPrecio}>
                                                 {item.Cantidad > 0 ?
                                                     <View style={{ flexDirection: "row" }}>

@@ -1,11 +1,13 @@
 import { View, Text, StyleSheet, Pressable, Alert, TouchableOpacity, TextInput, ScrollView, Modal } from 'react-native'
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { ButtonGroup, Input } from "@rneui/themed";
 import { formatoMonedaChileno, getUTCDate, fetchWithTimeout } from "../Components/util"
 import Loader from "./../Components/Loader"
 import { REACT_APP_SV } from "@env"
 import { useFonts } from 'expo-font'
 import Icon from 'react-native-vector-icons/FontAwesome'
+import DropDownPicker from 'react-native-dropdown-picker'
+import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 
 const DetallePedido = ({ navigation, route }) => {
 
@@ -23,12 +25,19 @@ const DetallePedido = ({ navigation, route }) => {
     //HOOKS
     const [modalVisible, setModalVisible] = useState(false)
     const [modalProductoVisible, setModalProductoVisible] = useState(false)
+    const [modalObservacionVisible, setModaObservacionlVisible] = useState(false)
 
+    const [obs, setObs] = useState("")
     const [valorDcto, setValorDcto] = useState("")
     const [porcentajeDcto, setPorcentajeDcto] = useState("")
-    const [obs, setObs] = useState("")
+
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [habilitaDescuento, setHabilitaDescuento] = useState(false)
+
+    //DROPDOWN
+    const [openDd, setOpenDd] = useState(false);
+    const [valueDd, setValueDd] = useState(null);
+    const [itemsDd, setItemsDd] = useState([]);
 
     const [PrecioTotal, setPrecioTotal] = useState(totalTemp)
     const [PrecioTotalDcto, setPrecioTotalDcto] = useState(0)
@@ -49,18 +58,48 @@ const DetallePedido = ({ navigation, route }) => {
     })
 
     //FUNCIONES
+
+    useEffect(() => {
+        CargaClientes()
+    }, [])
+
+    const CargaClientes = async () => {
+        const ROCliente = {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+            timeout: 5000
+        };
+
+        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/cliente/', ROCliente)
+            .then(response => response.json())
+            .then(json => {
+                setItemsDd(json)
+            })
+            .catch(err => {
+                Alert.alert("Error: ", "No se han podido cargar los clientes");
+            })
+            .finally(() => {
+
+            })
+    }
+
+    const handlePressDdCliente = (props) => {
+        props.onPress(props);
+        setValueDd(props.item._id)
+    }
+
     const IngresaVenta = async () => {
         setCargandoVenta(true)
-        console.log(getUTCDate())
+        //throw new Error("Error")
         const ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            timeout:5000,
+            timeout: 5000,
             body: JSON.stringify({
                 Venta: {
                     MedioPago: selectedIndex,
                     PrecioTotalVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal,
-                    Cliente_id: "1",
+                    Cliente_id: valueDd,
                     Fecha: getUTCDate(),
                     Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
                     Observacion: obs.trim() === "" ? null : obs
@@ -68,13 +107,11 @@ const DetallePedido = ({ navigation, route }) => {
                 ProductosVenta: pedido
             })
         };
+        console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
 
-        console.log(REACT_APP_SV + '/api/venta/')
-        await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
+        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/venta/', ROVenta)
             .then(response => {
-                console.log("response.status", response.status)
                 if (response.status === 200) {
-                    console.log("RESULTADO INSERCION VENTA: ", JSON.stringify(response))
                     setCargandoVenta(false)
                     navigation.navigate("VentaOk", { MontoVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal })
                 }
@@ -85,7 +122,22 @@ const DetallePedido = ({ navigation, route }) => {
             })
             .catch(err => {
                 setCargandoVenta(false)
-                Alert.alert("Error: ", "No se ha podido ingresar la venta");
+                Alert.alert(
+                    "ERROR  ",
+                    "NO HA SIDO POSIBLE REGISTRAR LA VENTA",
+                    [
+                        {
+                            text: "Cancelar",
+                            onPress: () => console.log("Cancel Pressed"),
+                            style: "cancel"
+                        },
+                        {
+                            text: "Reintentar",
+                            onPress: () => IngresaVenta(),
+                            style: "default"
+                        }
+                    ]
+                )
             })
     }
 
@@ -152,6 +204,8 @@ const DetallePedido = ({ navigation, route }) => {
             //isNaN(cantidadProductoModificar) ||
             isNaN(precioProductoModificar)
     }
+
+
 
 
     {
@@ -227,13 +281,8 @@ const DetallePedido = ({ navigation, route }) => {
                                         </Pressable>
                                     </View>
                                 </View>
-
-
-
                             </View>
                         </View>
-
-
                     </Modal>
 
                     {/* Modal Editar Producto */}
@@ -261,19 +310,6 @@ const DetallePedido = ({ navigation, route }) => {
                                 {/* BODY */}
                                 <View style={styles.modalBody}>
                                     <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
-                                        {/* <Input
-                                            placeholder="Cantidad"
-                                            leftIcon={{ type: 'font-awesome', name: 'shopping-basket' }}
-                                            onChangeText={text => { setCantidadProductoModificar(text) }}
-                                            autoFocus={true}
-                                            keyboardType='number-pad'
-                                            style={{
-                                                fontFamily: "PromptExtraLight",
-                                                marginLeft: 10,
-                                                fontSize: 15
-                                            }}
-                                            value={cantidadProductoModificar}
-                                        /> */}
                                         <Input
                                             placeholder="Precio Unitario"
                                             leftIcon={{ type: 'font-awesome', name: 'dollar' }}
@@ -315,6 +351,37 @@ const DetallePedido = ({ navigation, route }) => {
 
 
                     </Modal>
+
+                    {/* Modal Añadir Observacion */}
+                    <ReusableModal
+                        visible={modalObservacionVisible}
+                        closeModal={() => setModaObservacionlVisible(false)}
+                        headerTitle={"Añadir observación a la venta"}
+                    >
+                        <TextInput
+                            placeholder="Observaciones"
+                            multiline
+                            leftIcon={{ type: 'font-awesome', name: 'dollar' }}
+                            onChangeText={text => setObs(text)}
+                            autoFocus={true}
+                            style={{
+                                fontFamily: "PromptExtraLight",
+                                borderWidth:0.2,
+                                width:"100%",
+                                height:60,
+                                textAlign:"left",
+                                textAlignVertical:"top"
+                            }}
+                            value={obs}
+                        />
+                        <ModalFooter>
+                            <Pressable
+                                style={styles.modalBotonAplicar}
+                                onPress={() => setModaObservacionlVisible(false)}>
+                                <Text style={styles.modalButtonFooter}>Aplicar</Text>
+                            </Pressable>
+                        </ModalFooter>
+                    </ReusableModal>
 
                     {/* Detalle Productos */}
                     <View style={{ flex: 3 }}>
@@ -358,6 +425,13 @@ const DetallePedido = ({ navigation, route }) => {
                                 disabled={habilitaDescuento}>
                                 <Text style={styles.TextDcto}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
                             </TouchableOpacity>
+
+                        </View>
+                        <View>
+                            <TouchableOpacity
+                                onPress={() => setModaObservacionlVisible(true)}>
+                                <Text style={styles.TextDcto}>Añadir Observación</Text>
+                            </TouchableOpacity>
                         </View>
                     </View>
 
@@ -382,17 +456,53 @@ const DetallePedido = ({ navigation, route }) => {
                         />
                     </View>
 
-                    {/* observacion */}
-                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                        <Input
-                            placeholder="Observación"
-                            leftIcon={{ type: 'font-awesome', name: 'comment' }}
-                            onChangeText={text => { setObs(text) }}
+                    {/* cliente */}
+                    <View style={{ flex: 1 }}>
+                        <DropDownPicker
+                            open={openDd}
+                            value={valueDd}
+                            items={itemsDd}
+                            schema={{
+                                label: 'nombre',
+                                value: '_id',
+                                direccion: 'direccion'
+                            }}
+                            setOpen={setOpenDd}
+                            setValue={setValueDd}
+                            setItems={setItemsDd}
+                            searchable={true}
+                            searchPlaceholder="Nombre o Direccion"
+                            placeholder='Seleccione Cliente...'
                             style={{
-                                fontFamily: "PromptRegular"
+                                borderWidth: 0.3
+                            }}
+                            placeholderStyle={{
+                                fontFamily: "PromptLight"
+                            }}
+                            textStyle={{
+                                fontFamily: "PromptLight"
+                            }}
+                            language="ES"
+                            dropDownDirection='TOP'
+                            renderListItem={(props) => {
+                                return (
+                                    <TouchableOpacity
+                                        onPress={() => { handlePressDdCliente(props) }}
+                                        key={props.item.value}
+                                        style={styles.TouchableOpDropdownCliente}>
+                                        <Text style={styles.TextNombre}>{props.label}</Text>
+                                        <Text style={styles.TextPrecioUnitario}>{props.item.calle + ", " + props.item.comuna}</Text>
+
+                                    </TouchableOpacity>
+                                );
                             }}
                         />
+                        <TouchableOpacity
+                            onPress={() => navigation.navigate("Cliente")}>
+                            <Text style={styles.TextNuevoCliente}>Nuevo Cliente</Text>
+                        </TouchableOpacity>
                     </View>
+
 
                     {/* BotonFinalizar */}
                     <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
@@ -418,7 +528,7 @@ const styles = StyleSheet.create({
     modalHeaderText: {
         fontFamily: "PromptSemiBold",
         fontSize: 16,
-        flex:2
+        flex: 2
     },
     modalView: {
         backgroundColor: "white",
@@ -560,5 +670,18 @@ const styles = StyleSheet.create({
         letterSpacing: 0.25,
         color: 'white',
         fontFamily: "PromptSemiBold"
-    }
+    },
+    TouchableOpDropdownCliente: {
+        padding: 15,
+        borderBottomWidth: 0.3,
+        borderBottomColor: "lightgrey",
+
+    },
+    TextNuevoCliente: {
+        fontSize: 16,
+        textDecorationLine: 'underline',
+        color: "#00a8a8",
+        fontFamily: "PromptLight",
+        alignSelf: "flex-end"
+    },
 })

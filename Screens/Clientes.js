@@ -3,12 +3,16 @@ import { useNavigation } from '@react-navigation/native'
 import React, { useEffect, useState } from 'react'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useFonts } from 'expo-font'
+import { fetchWithTimeout } from '../Components/util'
+import Loader from '../Components/Loader'
+import { REACT_APP_SV } from "@env"
 
 const Clientes = () => {
 
     const navigation = useNavigation()
     const [data, setData] = useState([])
     const [filteredData, setFilteredData] = useState([])
+    const [loading, setLoading] = useState(false)
     const [pressBuscar, setPressBuscar] = useState(false)
     const [fontsLoaded] = useFonts({
         PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
@@ -18,14 +22,14 @@ const Clientes = () => {
         PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
         PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
     })
-    
+
 
 
     useEffect(() => {
         navigation.setOptions({
             headerRight: () => {
                 return (<View style={{ flexDirection: "row" }}>
-                    <TouchableOpacity onPress={()=> navigation.navigate("Cliente")}
+                    <TouchableOpacity onPress={() => navigation.navigate("Cliente")}
                         style={{
                             marginRight: 15,
                             paddingRight: 12,
@@ -42,25 +46,40 @@ const Clientes = () => {
 
                 </View>)
             },
-            headerTitle: "Clientes (384)",
+            headerTitle: "Clientes (" + data?.length + ")",
             headerTitleStyle: {
                 fontSize: 23
             }
         })
-    }, [navigation])
+    }, [navigation,data])
 
 
 
     useEffect(() => {
-        fetchClientes("https://randomuser.me/api/?results=20")
+        var url = "https://bcknodesuyai-production.up.railway.app" + '/api/cliente/'
+        fetchClientes(url)
     }, [])
 
     const fetchClientes = async (url) => {
-        const response = await fetch(url)
-        const jsonData = await response.json()
-        setData(jsonData.results)
-        setFilteredData(jsonData.results)
-        //console.log("🚀 ~ file: Clientes.js ~ line 30 ~ fetchClientes ~ jsonData.results", jsonData.results)
+        try {
+            setLoading(true)
+            let RO = {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 5000
+            }
+            await fetchWithTimeout(url, RO)
+                .then(response => response.json())
+                .then(json => {
+                    setData(json)
+                    setFilteredData(json)
+                    setLoading(false)
+                })
+
+        } catch (error) {
+            setLoading(false)
+            alert("Error al cargar los clientes")
+        }
     }
 
     const BarraBusqueda = () => {
@@ -74,7 +93,7 @@ const Clientes = () => {
                     onChangeText={(text) => searchFilter(text)}
                     style={{
                         fontFamily: "PromptExtraLight",
-                        letterSpacing:1.2,
+                        letterSpacing: 1.2,
                         marginHorizontal: 10,
                         margin: 10,
                         fontSize: 15,
@@ -97,7 +116,7 @@ const Clientes = () => {
     const searchFilter = (text) => {
         if (text) {
             const newData = data.filter(item => {
-                const itemData = item.name.first ? item.name.first.toUpperCase() : ''.toUpperCase()
+                const itemData = item.nombre ? item.nombre.toUpperCase() : ''.toUpperCase()
                 const textData = text.toUpperCase()
                 return itemData.indexOf(textData) > -1
             })
@@ -107,7 +126,8 @@ const Clientes = () => {
         }
     }
 
-    if (!fontsLoaded) return null
+
+    if (!fontsLoaded || loading) return Loader("Cargando Clientes...")
     return (
         <View>
 
@@ -118,12 +138,12 @@ const Clientes = () => {
                         return (
                             <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => { }}>
                                 <Image
-                                    source={{ uri: item.picture.large }}
+                                    source={require("./../assets/Images/user.png")}
                                     style={styles.image}
                                 />
                                 <View style={{ flex: 1 }}>
-                                    <Text style={styles.textName}>{item.name.first + " " + item.name.last}</Text>
-                                    <Text style={styles.textPrecioUnitario}>{item.email}</Text>
+                                    <Text style={styles.textName}>{item.nombre}</Text>
+                                    {item.direccion?<Text style={styles.textPrecioUnitario}>{item.calle + ", " + item.comuna}</Text>:<></>}
                                 </View>
 
                             </TouchableOpacity>
@@ -154,7 +174,8 @@ const styles = StyleSheet.create({
         width: 50,
         height: 50,
         borderRadius: 100,
-        flex: 0.3
+        flex: 0.3,
+        resizeMode:"contain"
     },
     textName: {
         fontSize: 20,

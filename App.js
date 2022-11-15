@@ -10,6 +10,7 @@ import ClientesScreen from './Screens/Clientes';
 import VentaOkScreen from './Screens/VentaOk';
 import DetalleEstadisticaScreen from './Screens/DetalleEstadistica'
 import ClienteScreen from './Screens/Cliente'
+import PuntosScreen from './Screens/Puntos'
 import SelectorDireccionClienteScreen from './Screens/SelectorDireccionCliente';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font'
@@ -106,7 +107,8 @@ export default function App() {
         <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
         <Stack.Screen name="DetalleEstadistica" component={DetalleEstadisticaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Detalle", }} />
         <Stack.Screen name="Cliente" component={ClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Cliente", }} />
-        <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "SelectorDireccionCliente", }} />
+        <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Seleccione Dirección", }} />
+        <Stack.Screen name="Puntos" component={PuntosScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Puntos", }} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,5 +1,5 @@
 import React from 'react'
-import { TextInput, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native'
+import { TextInput, View, Text, Image, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 import { useFonts } from 'expo-font'
@@ -7,6 +7,57 @@ import { useState } from 'react'
 import Loader from '../Components/Loader'
 import { REACT_APP_SV } from "@env"
 import { fetchWithTimeout } from "./../Components/util"
+import ReusableModal, { ModalFooter } from '../Components/ReusableModal'
+
+/* const ModalFooter = (props) => {
+
+    const { children } = props
+
+    return (<View style={styles.modalFooter}>
+        <View style={{ marginBottom: 10 }}>
+            {children}
+        </View>
+    </View>)
+} */
+
+/* const ModalPrueba = (props) => {
+
+    const { children, visible, closeModal, headerTitle, childrenFooter } = props
+
+    return (
+        <Modal
+            animationType="slide"
+            transparent={true}
+            visible={visible}
+            onRequestClose={() => {
+                console.log("Modal has been closed.");
+                closeModal()
+            }}
+        >
+            <View style={styles.centeredView}>
+                <View style={styles.modalView}>
+
+                    <View style={styles.modalHeader}>
+                        <Text style={styles.modalHeaderText}>{headerTitle}</Text>
+                        <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => closeModal()}>
+                            <Icon name="close" size={20} />
+                        </TouchableOpacity>
+
+                    </View>
+
+                    <View style={styles.modalBody}>
+                        <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                            {children}
+                        </View>
+
+                    </View>
+
+                    {childrenFooter}
+                </View>
+            </View>
+        </Modal>
+    )
+} */
 
 const Cliente = ({ navigation, route }) => {
 
@@ -16,10 +67,13 @@ const Cliente = ({ navigation, route }) => {
     const [observacion, setObservacion] = useState("")
     const [cargando, setCargando] = useState(false)
 
+    const [modalVisible, setModalVisible] = useState(false)
+    const [inputValue, setInputValue] = useState("")
+
     const direccion = route.params?.direccion
     let pdireccion = direccion?.split(",")
-    const calle = pdireccion ? pdireccion[0] : ""
-    const comuna = pdireccion ? pdireccion[pdireccion.length - 2] : ""
+    const calle = pdireccion ? pdireccion[0] : null
+    const comuna = pdireccion ? pdireccion[pdireccion.length - 2] : null
 
 
     const [fontsLoaded] = useFonts({
@@ -33,31 +87,32 @@ const Cliente = ({ navigation, route }) => {
 
     //FUNCIONES
     const addCliente = async () => {
+
+        let objCliente = {
+            Nombre: nombre.trim(),
+            Telefono: telefono?.trim(),
+            Direccion: direccion?.trim(),
+            Calle: calle?.trim(),
+            Comuna: comuna?.trim(),
+            Email: email?.trim(),
+            Observacion: observacion?.trim()
+        }
         console.log(nombre, telefono, direccion, calle, comuna, email, observacion)
         setCargando(true)
         const ROCliente = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             timeout: 5000,
-            body: JSON.stringify({
-                Nombre: nombre.trim(),
-                Telefono: telefono.trim(),
-                Direccion: direccion.trim(),
-                Calle: calle.trim(),
-                Comuna: comuna.trim(),
-                Email: email.trim(),
-                Observacion: observacion.trim()
-            })
+            body: JSON.stringify(objCliente)
         };
 
-        console.log(REACT_APP_SV + '/api/cliente/')
-        await fetchWithTimeout(REACT_APP_SV + '/api/cliente/', ROCliente)
+        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/cliente/', ROCliente)
             .then(response => {
                 console.log("response.status", response.status)
                 if (response.status === 200) {
                     console.log("RESULTADO INSERCION CLIENTE: ", JSON.stringify(response))
                     setCargando(false)
-                    alert("se ingreso el cliente")
+                    navigation.navigate("VentaOk", { ClienteCreado: objCliente })
                 }
                 else {
                     setCargando(false)
@@ -70,14 +125,50 @@ const Cliente = ({ navigation, route }) => {
             })
     }
 
+
+
+    const setText = (text) => {
+        setInputValue(text)
+    }
+
+
     if (!fontsLoaded) return null
 
     if (cargando) return Loader("Ingresando Cliente")
 
+
+
     return (
-        <KeyboardAwareScrollView>
+        <KeyboardAwareScrollView keyboardShouldPersistTaps="handled">
             <View style={styles.viewPrincipal}>
 
+
+                <ReusableModal
+                    visible={modalVisible}
+                    closeModal={() => setModalVisible(false)}
+                    headerTitle={"Puebaaaaaaaaa"}
+                >
+
+                    <TextInput
+                        placeholder="Valor Fijo"
+                        leftIcon={{ type: 'font-awesome', name: 'dollar' }}
+                        onChangeText={text => setText(text)}
+                        autoFocus={true}
+                        keyboardType='number-pad'
+                        style={{
+                            fontFamily: "PromptExtraLight",
+                            marginLeft: 10,
+                        }}
+                        value={inputValue}
+                    />
+                    <ModalFooter>
+                        <Pressable
+                            style={styles.buttonAplicarModalFooter}
+                            onPress={() => console.log("boton presionado")}>
+                            <Text style={styles.textButtonModalFooter}>Aplicar</Text>
+                        </Pressable>
+                    </ModalFooter>
+                </ReusableModal>
 
                 <View style={styles.viewImagen}>
                     <Image source={require("./../assets/Images/ThumbImagenPerfil.png")} style={styles.imagePrefil} />
@@ -127,10 +218,16 @@ const Cliente = ({ navigation, route }) => {
 
                 </View>
                 <View style={styles.viewButtonGuardar}>
-                    <TouchableOpacity style={styles.buttonGuardar} onPress={() => addCliente()}>
+                    <TouchableOpacity style={nombre.trim() === "" ? styles.buttonGuardarDisabled : styles.buttonGuardar} onPress={() => addCliente()} disabled={nombre.trim() === ""}>
                         <Text style={styles.textButtonGuardar}>Guardar</Text>
                     </TouchableOpacity>
                 </View>
+
+                {/* <View style={styles.viewButtonGuardar}>
+                    <TouchableOpacity style={styles.buttonGuardar} onPress={() => setModalVisible(true)}>
+                        <Text style={styles.textButtonGuardar}>Guardar</Text>
+                    </TouchableOpacity>
+                </View> */}
 
             </View>
         </KeyboardAwareScrollView>
@@ -140,6 +237,19 @@ const Cliente = ({ navigation, route }) => {
 export default Cliente
 
 const styles = StyleSheet.create({
+    buttonAplicarModalFooter: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        padding: 10
+    },
+    textButtonModalFooter: {
+        color: "white",
+        fontFamily: "PromptSemiBold",
+        fontSize: 15
+    },
     viewPrincipal: {
         flex: 1
     },
@@ -193,6 +303,18 @@ const styles = StyleSheet.create({
         backgroundColor: '#00a8a8',
         height: 60,
         marginHorizontal: 5
+    },
+    buttonGuardarDisabled: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        //paddingVertical: 12,
+        //paddingHorizontal: 32,
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        height: 60,
+        marginHorizontal: 5,
+        opacity: 0.5
     },
     textButtonGuardar: {
         fontSize: 20,

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Button, Alert } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from "react-native";
 import { formatoMonedaChileno, formatDateString, fetchWithTimeout } from "../Components/util";
 import Loader from "../Components/Loader";
-import ModalComp from './../Components/Modal'
 import { useIsFocused } from "@react-navigation/native";
 import { REACT_APP_SV } from "@env"
 import moment from "moment";
 import { useFonts } from 'expo-font'
+import Icon from 'react-native-vector-icons/FontAwesome'
 
 const Historial = ({ props }) => {
 
@@ -37,7 +37,7 @@ const Historial = ({ props }) => {
         let localDate = moment(date).local(true).format("YYYY-MM-DD HH:mm:ss");
         console.log("Moment Local Date: " + localDate); // Moment Local Date: 2019-06-27 13:20:46 */
 
-        cargaVentas(REACT_APP_SV + '/api/venta/Historial', RO)
+        cargaVentas("https://bcknodesuyai-production.up.railway.app" + '/api/venta/Historial', RO)
 
     }, [props, isFocused])
 
@@ -137,24 +137,45 @@ const Historial = ({ props }) => {
                                             } else {
                                                 return (<></>)
                                             }
+                                        }
 
+                                        const IconoMedioPago = () => {
+                                            switch (item2.MedioPago) {
+                                                case 0:
+                                                    return (<Icon name="money" size={18} style={{ alignSelf: "center", marginLeft: 7 }} />);
+                                                case 1:
+                                                    return (<Icon name="mobile-phone" size={24} style={{ alignSelf: "center", marginLeft: 7 }} />);
+                                                case 2:
+                                                    return (<Icon name="credit-card" size={16} style={{ alignSelf: "center", marginLeft: 7 }} />);
+                                            }
                                         }
 
                                         return (
                                             <View key={index2}>
-                                                <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
-                                                    <View style={{ flex: 2 }}>
-                                                        <Text style={styles.textMontoVentaUnitaria}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
-                                                        <View style={{ flexDirection: "row" }}>
-                                                            <Text style={styles.textCliente}>Cliente: </Text>
-                                                            <Text style={ styles.textCliente }>{item2.Cliente}</Text>
+                                                <View>
+                                                    <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                                                        <View style={{ flex: 2 }}>
+
+                                                            <View style={{ flexDirection: "row" }}>
+                                                                <Text style={styles.textMontoVentaUnitaria}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
+                                                                {IconoMedioPago()}
+                                                            </View>
+
+                                                            <Text style={styles.textCliente}>{item2.CantidadItems + " items"}</Text>
+                                                            {item2.Cliente ?
+                                                                <View style={{ flexDirection: "row" }}>
+                                                                    <Text style={styles.textCliente}>Cliente: </Text>
+                                                                    <Text style={styles.textCliente}>{item2.Cliente}</Text>
+                                                                </View> :
+                                                                <></>}
+                                                            {obs()}
                                                         </View>
-                                                        {obs()}
-                                                    </View>
-                                                    <View style={styles.textPrecio}>
-                                                        <Text style={{fontFamily:"PromptLight"}}>{hora}</Text>
-                                                    </View>
-                                                </TouchableOpacity>
+                                                        <View style={styles.textPrecio}>
+                                                            <Text style={{ fontFamily: "PromptLight" }}>{hora}</Text>
+                                                        </View>
+                                                    </TouchableOpacity>
+                                                </View>
+
                                             </View>
                                         )
                                     })}
@@ -181,10 +202,10 @@ const styles = StyleSheet.create({
         flex: 1,
         flexDirection: 'row',
         alignItems: 'center',
-        marginLeft: 10,
-        height: 80,
         borderBottomWidth: 0.5,
-        borderColor: "gray"
+        borderColor: "gray",
+        marginLeft: 10,
+        height: 90
     },
     image: {
         width: 50,
@@ -195,26 +216,26 @@ const styles = StyleSheet.create({
     textFecha: {
         fontSize: 21,
         //fontWeight: "600",
-        fontFamily:"PromptMedium"
+        fontFamily: "PromptMedium"
     },
     textResumen: {
         fontSize: 13,
         //fontWeight: "600",
-        fontFamily:"PromptExtraLight"
+        fontFamily: "PromptExtraLight"
     },
     textMontoVentaUnitaria: {
         fontSize: 20,
         //fontWeight: "600",
-        fontFamily:"PromptRegular"
+        fontFamily: "PromptRegular"
     },
     textCliente: {
         fontSize: 16,
         //fontWeight: "600",
-        fontFamily:"PromptLight"
+        fontFamily: "PromptLight"
     },
-    textObs:{
+    textObs: {
         fontSize: 13,
-        fontFamily:"PromptExtraLight"
+        fontFamily: "PromptExtraLight"
     },
     textPrecio: {
         flex: 0.5,
