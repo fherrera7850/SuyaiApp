@@ -28,7 +28,7 @@ const Estadisticas = ({ navigation, route }) => {
       headers: { 'Content-Type': 'application/json' }
     };
 
-    var url = "https://bcknodesuyai-production.up.railway.app" + '/api/venta/estadisticas/' + formatDateYYYYMMDD(fechas.FechaInicio) + '/' + formatDateYYYYMMDD(fechas.FechaFin)
+    var url = REACT_APP_SV + '/api/venta/estadisticas/' + formatDateYYYYMMDD(fechas.FechaInicio) + '/' + formatDateYYYYMMDD(fechas.FechaFin)
 
     fetch(url, RO)
       .then(response => response.json())

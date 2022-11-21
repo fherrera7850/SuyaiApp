@@ -146,7 +146,7 @@ const RealizarPedido = ({ navigation, route }) => {
     const [products, setProducts] = useState([])
     const [contItem, setContItem] = useState(0)
     const [total, setTotal] = useState(0)
-    const [loading, setLoading] = useState(true)
+    const [loading, setLoading] = useState(false)
     const [cantidad, setCantidad] = useState("")
     const [itemProducto, setItemProducto] = useState({})
     const [modalVisible, setModalVisible] = useState(false)
@@ -172,12 +172,13 @@ const RealizarPedido = ({ navigation, route }) => {
 
     async function cargaProductos() {
         try {
+            setLoading(true)
             var RO = {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
                 timeout: 5000
             };
-            var url = "https://bcknodesuyai-production.up.railway.app" + '/api/producto/'
+            var url = REACT_APP_SV + '/api/producto/'
             console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
@@ -192,7 +193,22 @@ const RealizarPedido = ({ navigation, route }) => {
 
         } catch (error) {
             setLoading(false)
-            Alert.alert("ERROR", "No se han podido cargar los productos")
+            Alert.alert(
+                "ERROR  ",
+                "No se han podido cargar los productos",
+                [
+                    {
+                        text: "Cancelar",
+                        onPress: () => { console.log("Cancel Pressed"); setLoading(false) },
+                        style: "cancel"
+                    },
+                    {
+                        text: "Reintentar",
+                        onPress: () => cargaProductos(),
+                        style: "default"
+                    }
+                ]
+            )
         }
     }
 

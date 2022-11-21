@@ -6,9 +6,11 @@ import { useFonts } from 'expo-font'
 import { fetchWithTimeout } from '../Components/util'
 import Loader from '../Components/Loader'
 import { REACT_APP_SV } from "@env"
+import { useIsFocused } from '@react-navigation/native'
 
-const Clientes = () => {
+const Clientes = ({ props }) => {
 
+    const isFocused = useIsFocused();
     const navigation = useNavigation()
     const [data, setData] = useState([])
     const [filteredData, setFilteredData] = useState([])
@@ -22,8 +24,7 @@ const Clientes = () => {
         PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
         PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
     })
-
-
+    
 
     useEffect(() => {
         navigation.setOptions({
@@ -51,14 +52,12 @@ const Clientes = () => {
                 fontSize: 23
             }
         })
-    }, [navigation,data])
-
-
+    }, [navigation, data])
 
     useEffect(() => {
-        var url = "https://bcknodesuyai-production.up.railway.app" + '/api/cliente/'
+        var url = REACT_APP_SV + '/api/cliente/'
         fetchClientes(url)
-    }, [])
+    }, [isFocused, props])
 
     const fetchClientes = async (url) => {
         try {
@@ -130,7 +129,7 @@ const Clientes = () => {
     if (!fontsLoaded || loading) return Loader("Cargando Clientes...")
     return (
         <View>
-
+            
             {BarraBusqueda()}
             <ScrollView>
                 {
@@ -143,7 +142,7 @@ const Clientes = () => {
                                 />
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.textName}>{item.nombre}</Text>
-                                    {item.direccion?<Text style={styles.textPrecioUnitario}>{item.calle + ", " + item.comuna}</Text>:<></>}
+                                    {item.direccion ? <Text style={styles.textPrecioUnitario}>{item.calle + ", " + item.comuna}</Text> : <></>}
                                 </View>
 
                             </TouchableOpacity>
@@ -175,7 +174,7 @@ const styles = StyleSheet.create({
         height: 50,
         borderRadius: 100,
         flex: 0.3,
-        resizeMode:"contain"
+        resizeMode: "contain"
     },
     textName: {
         fontSize: 20,
@@ -195,5 +194,5 @@ const styles = StyleSheet.create({
         margin: 12,
         borderWidth: 1,
         padding: 10,
-    },
+    }
 });

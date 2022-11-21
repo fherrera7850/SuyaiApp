@@ -8,8 +8,9 @@ import { useFonts } from 'expo-font'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import DropDownPicker from 'react-native-dropdown-picker'
 import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
+import { useIsFocused } from '@react-navigation/native';
 
-const DetallePedido = ({ navigation, route }) => {
+const DetallePedido = ({ navigation, route, props }) => {
 
     //OPERACIONES
     let TempPedido = route.params.pedido.filter((x) => {
@@ -24,6 +25,7 @@ const DetallePedido = ({ navigation, route }) => {
 
     //HOOKS
     const [modalVisible, setModalVisible] = useState(false)
+    const [modalDescuentosVisible, setModalDescuentosVisible] = useState(false)
     const [modalProductoVisible, setModalProductoVisible] = useState(false)
     const [modalObservacionVisible, setModaObservacionlVisible] = useState(false)
 
@@ -33,6 +35,8 @@ const DetallePedido = ({ navigation, route }) => {
 
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [habilitaDescuento, setHabilitaDescuento] = useState(false)
+
+    const isFocused = useIsFocused();
 
     //DROPDOWN
     const [openDd, setOpenDd] = useState(false);
@@ -61,7 +65,9 @@ const DetallePedido = ({ navigation, route }) => {
 
     useEffect(() => {
         CargaClientes()
-    }, [])
+        console.log("RENDER CLIENTES88888888888888888888888888888888888888888888888888888888888888888888888")
+    }, [props, isFocused])
+    //},[])
 
     const CargaClientes = async () => {
         const ROCliente = {
@@ -70,10 +76,11 @@ const DetallePedido = ({ navigation, route }) => {
             timeout: 5000
         };
 
-        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/cliente/', ROCliente)
+        await fetchWithTimeout(REACT_APP_SV + '/api/cliente/', ROCliente)
             .then(response => response.json())
             .then(json => {
                 setItemsDd(json)
+                console.log("🚀 ~ file: DetalleVenta.js ~ line 81 ~ CargaClientes ~ json")
             })
             .catch(err => {
                 Alert.alert("Error: ", "No se han podido cargar los clientes");
@@ -109,7 +116,7 @@ const DetallePedido = ({ navigation, route }) => {
         };
         console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
 
-        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/venta/', ROVenta)
+        await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
             .then(response => {
                 if (response.status === 200) {
                     setCargandoVenta(false)
@@ -205,7 +212,9 @@ const DetallePedido = ({ navigation, route }) => {
             isNaN(precioProductoModificar)
     }
 
-
+    const NuevoCliente = () => {
+        navigation.navigate('Cliente', { FromDetalleVenta: true })
+    }
 
 
     {
@@ -285,6 +294,48 @@ const DetallePedido = ({ navigation, route }) => {
                         </View>
                     </Modal>
 
+                    {/* ReusableModal Descuentos */}
+                    <ReusableModal
+                        visible={modalDescuentosVisible}
+                        closeModal={() => setModalDescuentosVisible(false)}
+                        headerTitle={"Aplicar descuento"}
+                        closeButton={true}
+                    >
+                        <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                            <Input
+                                placeholder="Valor Fijo"
+                                leftIcon={{ type: 'font-awesome', name: 'dollar' }}
+                                onChangeText={text => { setValorDcto(text); setPorcentajeDcto("") }}
+                                autoFocus={true}
+                                keyboardType='number-pad'
+                                style={{
+                                    fontFamily: "PromptExtraLight",
+                                    marginLeft: 10
+                                }}
+                                value={valorDcto}
+                            />
+                            <Input
+                                placeholder="Porcentaje"
+                                leftIcon={{ type: 'font-awesome', name: 'percent' }}
+                                onChangeText={text => { setPorcentajeDcto(text); setValorDcto("") }}
+                                autoFocus={true}
+                                keyboardType='number-pad'
+                                style={{
+                                    fontFamily: "PromptExtraLight",
+                                    marginLeft: 10
+                                }}
+                                value={porcentajeDcto}
+                            />
+                        </View>
+                        <ModalFooter>
+                            <Pressable
+                                style={styles.modalBotonAplicar}
+                                onPress={() => setModaObservacionlVisible(false)}>
+                                <Text style={styles.modalButtonFooter}>Aplicar</Text>
+                            </Pressable>
+                        </ModalFooter>
+                    </ReusableModal>
+
                     {/* Modal Editar Producto */}
                     <Modal
                         animationType="slide"
@@ -352,11 +403,12 @@ const DetallePedido = ({ navigation, route }) => {
 
                     </Modal>
 
-                    {/* Modal Añadir Observacion */}
+                    {/* ReusableModal Añadir Observacion */}
                     <ReusableModal
                         visible={modalObservacionVisible}
                         closeModal={() => setModaObservacionlVisible(false)}
                         headerTitle={"Añadir observación a la venta"}
+                        closeButton={true}
                     >
                         <TextInput
                             placeholder="Observaciones"
@@ -366,11 +418,11 @@ const DetallePedido = ({ navigation, route }) => {
                             autoFocus={true}
                             style={{
                                 fontFamily: "PromptExtraLight",
-                                borderWidth:0.2,
-                                width:"100%",
-                                height:60,
-                                textAlign:"left",
-                                textAlignVertical:"top"
+                                borderWidth: 0.2,
+                                width: "100%",
+                                height: 60,
+                                textAlign: "left",
+                                textAlignVertical: "top"
                             }}
                             value={obs}
                         />
@@ -421,7 +473,7 @@ const DetallePedido = ({ navigation, route }) => {
                         </View>
                         <View style={{ flexDirection: "row" }}>
                             <TouchableOpacity
-                                onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalVisible(true)}
+                                onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalDescuentosVisible(true)}
                                 disabled={habilitaDescuento}>
                                 <Text style={styles.TextDcto}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
                             </TouchableOpacity>
@@ -497,8 +549,9 @@ const DetallePedido = ({ navigation, route }) => {
                                 );
                             }}
                         />
+
                         <TouchableOpacity
-                            onPress={() => navigation.navigate("Cliente")}>
+                            onPress={() => NuevoCliente()}>
                             <Text style={styles.TextNuevoCliente}>Nuevo Cliente</Text>
                         </TouchableOpacity>
                     </View>

@@ -37,7 +37,7 @@ const Historial = ({ props }) => {
         let localDate = moment(date).local(true).format("YYYY-MM-DD HH:mm:ss");
         console.log("Moment Local Date: " + localDate); // Moment Local Date: 2019-06-27 13:20:46 */
 
-        cargaVentas("https://bcknodesuyai-production.up.railway.app" + '/api/venta/Historial', RO)
+        cargaVentas(REACT_APP_SV + '/api/venta/Historial', RO)
 
     }, [props, isFocused])
 

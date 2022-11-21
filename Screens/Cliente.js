@@ -9,56 +9,6 @@ import { REACT_APP_SV } from "@env"
 import { fetchWithTimeout } from "./../Components/util"
 import ReusableModal, { ModalFooter } from '../Components/ReusableModal'
 
-/* const ModalFooter = (props) => {
-
-    const { children } = props
-
-    return (<View style={styles.modalFooter}>
-        <View style={{ marginBottom: 10 }}>
-            {children}
-        </View>
-    </View>)
-} */
-
-/* const ModalPrueba = (props) => {
-
-    const { children, visible, closeModal, headerTitle, childrenFooter } = props
-
-    return (
-        <Modal
-            animationType="slide"
-            transparent={true}
-            visible={visible}
-            onRequestClose={() => {
-                console.log("Modal has been closed.");
-                closeModal()
-            }}
-        >
-            <View style={styles.centeredView}>
-                <View style={styles.modalView}>
-
-                    <View style={styles.modalHeader}>
-                        <Text style={styles.modalHeaderText}>{headerTitle}</Text>
-                        <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => closeModal()}>
-                            <Icon name="close" size={20} />
-                        </TouchableOpacity>
-
-                    </View>
-
-                    <View style={styles.modalBody}>
-                        <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
-                            {children}
-                        </View>
-
-                    </View>
-
-                    {childrenFooter}
-                </View>
-            </View>
-        </Modal>
-    )
-} */
-
 const Cliente = ({ navigation, route }) => {
 
     const [nombre, setNombre] = useState("")
@@ -67,13 +17,13 @@ const Cliente = ({ navigation, route }) => {
     const [observacion, setObservacion] = useState("")
     const [cargando, setCargando] = useState(false)
 
-    const [modalVisible, setModalVisible] = useState(false)
-    const [inputValue, setInputValue] = useState("")
+    const [modalVisibleClienteOK, setModalVisibleClienteOK] = useState(false)
 
     const direccion = route.params?.direccion
     let pdireccion = direccion?.split(",")
     const calle = pdireccion ? pdireccion[0] : null
     const comuna = pdireccion ? pdireccion[pdireccion.length - 2] : null
+    const FromDetalleVenta = route.params?.FromDetalleVenta
 
 
     const [fontsLoaded] = useFonts({
@@ -106,13 +56,14 @@ const Cliente = ({ navigation, route }) => {
             body: JSON.stringify(objCliente)
         };
 
-        await fetchWithTimeout("https://bcknodesuyai-production.up.railway.app" + '/api/cliente/', ROCliente)
+        await fetchWithTimeout(REACT_APP_SV + '/api/cliente/', ROCliente)
             .then(response => {
                 console.log("response.status", response.status)
                 if (response.status === 200) {
                     console.log("RESULTADO INSERCION CLIENTE: ", JSON.stringify(response))
                     setCargando(false)
-                    navigation.navigate("VentaOk", { ClienteCreado: objCliente })
+                    //navigation.navigate("VentaOk", { ClienteCreado: objCliente })
+                    setModalVisibleClienteOK(true)
                 }
                 else {
                     setCargando(false)
@@ -121,52 +72,76 @@ const Cliente = ({ navigation, route }) => {
             })
             .catch(err => {
                 setCargando(false)
-                alert("No se ha podido ingresar la venta");
+                alert("No se ha podido ingresar el nuevo cliente");
             })
     }
 
-
-
-    const setText = (text) => {
-        setInputValue(text)
+    const limpia = () => {
+        setNombre("")
+        setTelefono("")
+        setEmail("")
+        setObservacion("")
+        navigation.setParams({ direccion: null })
+        setModalVisibleClienteOK(false)
     }
-
 
     if (!fontsLoaded) return null
 
     if (cargando) return Loader("Ingresando Cliente")
 
-
-
     return (
         <KeyboardAwareScrollView keyboardShouldPersistTaps="handled">
             <View style={styles.viewPrincipal}>
-
-
+                {/* Modal Cliente Creado */}
                 <ReusableModal
-                    visible={modalVisible}
-                    closeModal={() => setModalVisible(false)}
-                    headerTitle={"Puebaaaaaaaaa"}
+                    visible={modalVisibleClienteOK}
+                    closeModal={() => setModalVisibleClienteOK(false)}
+                    headerTitle={"Cliente creado exitosamente"}
+                    closeButton={false}
                 >
+                    <View style={{ alignContent: "flex-start" }}>
+                        <View style={{ flexDirection: "row", textAlign: "left" }}>
+                            <Icon style={styles.iconDetalleCliente} name="user-o" size={18} color="#000" />
+                            <Text style={styles.textDetalleClienteModal}>{nombre}</Text>
+                        </View>
+                        {telefono ? <View style={styles.viewModalDetalleCliente}>
+                            <Icon style={styles.iconDetalleCliente} name="phone" size={20} color="#000" />
+                            <Text style={styles.textDetalleClienteModal}>{telefono}</Text>
+                        </View> : <></>}
 
-                    <TextInput
-                        placeholder="Valor Fijo"
-                        leftIcon={{ type: 'font-awesome', name: 'dollar' }}
-                        onChangeText={text => setText(text)}
-                        autoFocus={true}
-                        keyboardType='number-pad'
-                        style={{
-                            fontFamily: "PromptExtraLight",
-                            marginLeft: 10,
-                        }}
-                        value={inputValue}
-                    />
+                        {direccion ? <View style={styles.viewModalDetalleCliente}>
+                            <Icon style={styles.iconDetalleCliente} name="map-marker" size={20} color="#000" />
+                            <Text style={styles.textDetalleClienteModal}>{calle.trim() + ", " + comuna.trim()}</Text>
+                        </View> : <></>}
+
+                        {email ? <View style={styles.viewModalDetalleCliente}>
+                            <Icon style={styles.iconDetalleCliente} name="envelope-o" size={15} color="#000" />
+                            <Text style={styles.textDetalleClienteModal}>{email}</Text>
+                        </View> : <></>}
+
+                        {observacion ? <View style={styles.viewModalDetalleCliente}>
+                            <Icon style={styles.iconDetalleCliente} name="comments" size={15} color="#000" />
+                            <Text style={styles.textDetalleClienteModal}>{observacion}</Text>
+                        </View> : <></>}
+                    </View>
+
+
                     <ModalFooter>
-                        <Pressable
-                            style={styles.buttonAplicarModalFooter}
-                            onPress={() => console.log("boton presionado")}>
-                            <Text style={styles.textButtonModalFooter}>Aplicar</Text>
-                        </Pressable>
+                        <View style={{ flexDirection: "row" }}>
+                            {!FromDetalleVenta ?
+                                <Pressable
+                                    style={styles.modalBotonNuevoCliente}
+                                    onPress={() => limpia()}>
+                                    <Text style={styles.textModalButtonFooter}>Nuevo Cliente</Text>
+                                </Pressable>
+                                :
+                                <Pressable
+                                    style={styles.modalBotonVolverVenta}
+                                    onPress={() => navigation.goBack()}>
+                                    <Text style={styles.textModalButtonFooter}>Continuar Venta</Text>
+                                </Pressable>
+                            }
+                        </View>
                     </ModalFooter>
                 </ReusableModal>
 
@@ -330,5 +305,43 @@ const styles = StyleSheet.create({
         fontFamily: "PromptExtraLight",
         fontSize: 16,
         marginBottom: 20
+    },
+    modalBotonNuevoCliente: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        padding: 10
+    },
+    modalBotonVolverVenta: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#00a8a8',
+        padding: 10,
+        marginLeft: 10
+    },
+    textModalButtonFooter: {
+        color: "white",
+        fontFamily: "PromptSemiBold",
+        fontSize: 15
+    },
+    textDetalleClienteModal: {
+        fontFamily: "PromptLight",
+        fontSize: 20,
+        marginLeft: 5
+    },
+    iconDetalleCliente: {
+        /* justifyContent: "center",
+        alignItems: "center",
+        paddingTop: 5,
+        marginLeft: 25 */
+        alignSelf: "center"
+    },
+    viewModalDetalleCliente: {
+        flexDirection: "row",
+        marginTop: 5
     }
 })

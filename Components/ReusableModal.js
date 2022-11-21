@@ -1,18 +1,22 @@
-import { StyleSheet, Modal, View, Text, TouchableOpacity } from 'react-native'
+import { StyleSheet, View, Text, TouchableOpacity } from 'react-native'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import React from 'react'
+import Modal from "react-native-modal";
 
 export default ReusableModal = (props) => {
-    const { children, visible, closeModal, headerTitle, childrenFooter } = props
+    const { children, visible, closeModal, headerTitle, childrenFooter, closeButton } = props
 
     return (
         <Modal
-            animationType="slide"
+            //animationType="slide"
             transparent={true}
-            visible={visible}
+            hasBackdrop={true}
+            backdropOpacity={10}
+            backdropColor={"rgba(0, 0, 0, 0.5)"}
+            isVisible={visible}
             onRequestClose={() => {
                 console.log("Modal has been closed.");
-                closeModal()
+                //closeModal()
             }}
         >
             <View style={styles.centeredView}>
@@ -22,15 +26,24 @@ export default ReusableModal = (props) => {
                     {/* HEADER */}
                     <View style={styles.modalHeader}>
                         <Text style={styles.modalHeaderText}>{headerTitle}</Text>
-                        <TouchableOpacity style={{ flex: 1, alignItems: "flex-end" }} onPress={() => closeModal()}>
+                        {closeButton ? <TouchableOpacity style={{
+                            flex: 1, alignItems: "flex-end",
+                            alignSelf: "baseline" //cruz en el top
+                        }} onPress={() => closeModal()}>
                             <Icon name="close" size={20} />
-                        </TouchableOpacity>
+                        </TouchableOpacity> : <></>}
+
 
                     </View>
 
                     {/* BODY */}
                     <View style={styles.modalBody}>
-                        <View style={{ justifyContent: "center", alignItems: "center", width: "100%" }}>
+                        <View style={
+                            {
+                                //justifyContent: "center", 
+                                //alignItems: "center", 
+                                width: "100%"
+                            }}>
                             {children}
                         </View>
 
@@ -64,15 +77,15 @@ const styles = StyleSheet.create({
     },
     modalHeaderText: {
         fontFamily: "PromptSemiBold",
-        fontSize: 16,
+        fontSize: 19,
         flex: 2
     },
     modalView: {
         backgroundColor: "white",
         borderRadius: 20,
-        padding: 25,
+        padding: 18,
         elevation: 20,
-        width: "70%",
+        width: "100%",
     },
     modalHeader: {
         width: "100%",
@@ -81,14 +94,14 @@ const styles = StyleSheet.create({
         paddingBottom: 20
     },
     modalBody: {
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 20,
+        /* justifyContent: "center",
+        alignItems: "center", */
+        //padding: 5,
     },
     modalFooter: {
         justifyContent: "center",
         alignItems: "flex-end",
         width: "100%",
-        paddingTop: 20
+        marginTop: 20
     }
 })

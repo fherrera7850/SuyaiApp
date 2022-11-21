@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
 import MapView, { Marker } from 'react-native-maps'
 import React, { useRef, useState } from 'react'
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
-import { GOOGLE_API_KEY } from '../Components/Environments';
+import { REACT_APP_GOOGLE_API_KEY } from '@env'
 import Constants from 'expo-constants'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useNavigation } from '@react-navigation/native'
@@ -63,7 +63,7 @@ const SelectorDireccionCliente = () => {
                         })
                     }}
                     query={{
-                        key: GOOGLE_API_KEY,
+                        key: REACT_APP_GOOGLE_API_KEY,
                         language: 'es',
                     }}
                 />
