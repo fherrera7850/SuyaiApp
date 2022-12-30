@@ -12,6 +12,7 @@ import ReusableModal, { ModalFooter } from '../Components/ReusableModal'
 const Cliente = ({ navigation, route }) => {
 
     const [nombre, setNombre] = useState("")
+    const [objDireccion, setObjDireccion] = useState({})
     const [telefono, setTelefono] = useState("")
     const [email, setEmail] = useState("")
     const [observacion, setObservacion] = useState("")
@@ -83,6 +84,7 @@ const Cliente = ({ navigation, route }) => {
         setObservacion("")
         navigation.setParams({ direccion: null })
         setModalVisibleClienteOK(false)
+        setObjDireccion({})
     }
 
     if (!fontsLoaded) return null
@@ -129,11 +131,18 @@ const Cliente = ({ navigation, route }) => {
                     <ModalFooter>
                         <View style={{ flexDirection: "row" }}>
                             {!FromDetalleVenta ?
+                            <>
                                 <Pressable
                                     style={styles.modalBotonNuevoCliente}
                                     onPress={() => limpia()}>
                                     <Text style={styles.textModalButtonFooter}>Nuevo Cliente</Text>
                                 </Pressable>
+                                <Pressable
+                                    style={styles.modalBotonVolver}
+                                    onPress={() => navigation.goBack()}>
+                                    <Text style={styles.textModalButtonFooter}>Volver</Text>
+                                </Pressable>
+                                </>
                                 :
                                 <Pressable
                                     style={styles.modalBotonVolverVenta}
@@ -320,6 +329,15 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         elevation: 3,
         backgroundColor: '#00a8a8',
+        padding: 10,
+        marginLeft: 10
+    },
+    modalBotonVolver: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#ffbd59',
         padding: 10,
         marginLeft: 10
     },

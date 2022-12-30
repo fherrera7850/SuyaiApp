@@ -53,7 +53,7 @@ const SelectorFecha = ({ navigation }) => {
     if (!fontsLoaded) return null
 
     return (
-        <SafeAreaView style={{ flex: 1 }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor:"white" }}>
             <View style={styles.MainContainer}>
 
                 <View style={{ flexDirection: "row", alignItems: "center" }}>

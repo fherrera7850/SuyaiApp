@@ -8,7 +8,7 @@ import moment from "moment";
 import { useFonts } from 'expo-font'
 import Icon from 'react-native-vector-icons/FontAwesome'
 
-const Historial = ({ props }) => {
+const Historial = ({ props, navigation }) => {
 
     const isFocused = useIsFocused();
     const [Ventas, SetVentas] = useState([])
@@ -38,6 +38,7 @@ const Historial = ({ props }) => {
         console.log("Moment Local Date: " + localDate); // Moment Local Date: 2019-06-27 13:20:46 */
 
         cargaVentas(REACT_APP_SV + '/api/venta/Historial', RO)
+        console.log("RECARGA HISTORIAL")
 
     }, [props, isFocused])
 
@@ -53,9 +54,11 @@ const Historial = ({ props }) => {
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
-                    //console.log(json)
                     if (!json.ErrorMessage) {
                         SetVentas(json)
+                        console.log("🚀 ~ file: Historial.js:64 ~ cargaVentas ~ json", json)
+                    }else{
+                        SetVentas([])
                     }
                     setLoading(false)
                 })
@@ -93,7 +96,7 @@ const Historial = ({ props }) => {
         }
         else {
             return (
-                <View>
+                <View style={{ backgroundColor: "white" }}>
                     {/* <Button onPress={() => setModalVisible(true)} title={"Modal"} />
 
                     <ModalComp modalVisible={modalVisible}>
@@ -125,19 +128,10 @@ const Historial = ({ props }) => {
                                 <View key={index}>
                                     {encabezado(FechaTitulo, item.NroVentas, item.SumaVentas)}
                                     {item.Ventas.map((item2, index2) => {
-
+                                        console.log(item2)
                                         let hora = moment(item2.Fecha).format("HH:mm")
                                         //console.log("🚀 ~ file: Historial.js ~ line 121 ~ obs ~ item", item)
-                                        const obs = () => {
-                                            if (item2.Observacion) {
-                                                return (<View style={{ flexDirection: "row" }}>
-                                                    <Text style={styles.textObs}>Obs:</Text>
-                                                    <Text style={styles.textObs}>{item2.Observacion}</Text>
-                                                </View>)
-                                            } else {
-                                                return (<></>)
-                                            }
-                                        }
+
 
                                         const IconoMedioPago = () => {
                                             switch (item2.MedioPago) {
@@ -153,22 +147,27 @@ const Historial = ({ props }) => {
                                         return (
                                             <View key={index2}>
                                                 <View>
-                                                    <TouchableOpacity style={styles.itemContainer} onPress={() => { }}>
+                                                    <TouchableOpacity style={styles.itemContainer} onPress={() => navigation.navigate("DetalleVenta", { VentaHistorial: item2._id })}>
                                                         <View style={{ flex: 2 }}>
 
-                                                            <View style={{ flexDirection: "row" }}>
+                                                            <View style={{ flexDirection: "row", marginBottom: 7 }}>
                                                                 <Text style={styles.textMontoVentaUnitaria}>$ {formatoMonedaChileno(item2.PrecioTotalVenta, true)}</Text>
                                                                 {IconoMedioPago()}
+                                                                <Text style={styles.textCantItems}>{"(" + item2.CantidadItems + " items)"}</Text>
                                                             </View>
 
-                                                            <Text style={styles.textCliente}>{item2.CantidadItems + " items"}</Text>
+
                                                             {item2.Cliente ?
                                                                 <View style={{ flexDirection: "row" }}>
-                                                                    <Text style={styles.textCliente}>Cliente: </Text>
+                                                                    <Icon name="user" size={16} style={{ alignSelf: "center", marginRight: 5, alignSelf: "baseline" }} />
                                                                     <Text style={styles.textCliente}>{item2.Cliente}</Text>
                                                                 </View> :
                                                                 <></>}
-                                                            {obs()}
+                                                            <View style={{ flexDirection: "row" }}>
+                                                                {item2.Direccion ? <><Icon name="map-marker" size={18} style={{ alignSelf: "center", marginRight: 5, alignSelf: "baseline" }} />
+                                                                    <Text style={styles.textCliente}>{item2.Direccion}</Text></> : <></>}
+                                                            </View>
+
                                                         </View>
                                                         <View style={styles.textPrecio}>
                                                             <Text style={{ fontFamily: "PromptLight" }}>{hora}</Text>
@@ -205,7 +204,8 @@ const styles = StyleSheet.create({
         borderBottomWidth: 0.5,
         borderColor: "gray",
         marginLeft: 10,
-        height: 90
+        paddingVertical: 15
+        //height: 90
     },
     image: {
         width: 50,
@@ -214,7 +214,7 @@ const styles = StyleSheet.create({
         flex: 0.4
     },
     textFecha: {
-        fontSize: 21,
+        fontSize: 27,
         //fontWeight: "600",
         fontFamily: "PromptMedium"
     },
@@ -232,6 +232,12 @@ const styles = StyleSheet.create({
         fontSize: 16,
         //fontWeight: "600",
         fontFamily: "PromptLight"
+    },
+    textCantItems: {
+        fontSize: 16,
+        alignSelf: "center",
+        fontFamily: "PromptLight",
+        marginLeft: 5
     },
     textObs: {
         fontSize: 13,

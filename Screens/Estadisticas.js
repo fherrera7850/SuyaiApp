@@ -52,49 +52,50 @@ const Estadisticas = ({ navigation, route }) => {
   if (!fontsLoaded || loading) return Loader("Cargando Estadísticas")
 
   return (
+    <View style={{ flex: 1, backgroundColor: "white" }}>
+      <View style={{ flex: 1, margin: 20 }}>
+        <Pressable style={styles.BotonFechas} onPress={() => navigation.navigate("SelectorFecha")}>
+          <Text style={styles.TextoFechas}>
+            {formatDateString(fechas.FechaInicio)}
+          </Text>
+          <Text style={styles.TextoFechas}>
+            {formatDateString(fechas.FechaFin)}
+          </Text>
 
-    <View style={{ flex: 1, margin: 20 }}>
-      <Pressable style={styles.BotonFechas} onPress={() => navigation.navigate("SelectorFecha")}>
-        <Text style={styles.TextoFechas}>
-          {formatDateString(fechas.FechaInicio)}
-        </Text>
-        <Text style={styles.TextoFechas}>
-          {formatDateString(fechas.FechaFin)}
-        </Text>
 
+        </Pressable>
 
-      </Pressable>
+        <View style={{ marginTop: 15 }}>
+          <Text style={styles.TextoTitulos}>Facturacion</Text>
+          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.SumaVentas)}</Text>
+        </View>
 
-      <View style={{ marginTop: 15 }}>
-        <Text style={styles.TextoTitulos}>Facturacion</Text>
-        <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.SumaVentas)}</Text>
+        <View style={{ marginTop: 15 }}>
+          <Text style={styles.TextoTitulos}>Ventas</Text>
+          <Text style={styles.TextoSubtitulos}>{formatoMonedaChileno(estadisticas.NroVentas)}</Text>
+        </View>
+
+        <View style={{ marginTop: 15 }}>
+          <Text style={styles.TextoTitulos}>Venta Promedio</Text>
+          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.PromedioVentas)}</Text>
+        </View>
+
+        <View style={{ marginTop: 15 }}>
+          <Text style={styles.TextoTitulos}>Ganancia</Text>
+          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.GananciaVentas)}</Text>
+        </View>
+
+        <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
+          <Text style={styles.TextoTitulos}>Productos Más Vendidos</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas.MasVendidos[0].nombre : ""}</Text>
+        </Pressable>
+
+        <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
+          <Text style={styles.TextoTitulos}>Medios de Pago Más Utilizados</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas.MediosDePago[0].mediopago : ""}</Text>
+        </Pressable>
+
       </View>
-
-      <View style={{ marginTop: 15 }}>
-        <Text style={styles.TextoTitulos}>Ventas</Text>
-        <Text style={styles.TextoSubtitulos}>{formatoMonedaChileno(estadisticas.NroVentas)}</Text>
-      </View>
-
-      <View style={{ marginTop: 15 }}>
-        <Text style={styles.TextoTitulos}>Venta Promedio</Text>
-        <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.PromedioVentas)}</Text>
-      </View>
-
-      <View style={{ marginTop: 15 }}>
-        <Text style={styles.TextoTitulos}>Ganancia</Text>
-        <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.GananciaVentas)}</Text>
-      </View>
-
-      <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
-        <Text style={styles.TextoTitulos}>Productos Más Vendidos</Text>
-        <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas.MasVendidos[0].nombre : ""}</Text>
-      </Pressable>
-
-      <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
-        <Text style={styles.TextoTitulos}>Medios de Pago Más Utilizados</Text>
-        <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas.MediosDePago[0].mediopago : ""}</Text>
-      </Pressable>
-
     </View>
   )
 }

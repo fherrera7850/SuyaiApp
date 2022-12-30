@@ -1,13 +1,14 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native'
+import { View, StyleSheet, TouchableOpacity } from 'react-native'
 import MapView, { Marker } from 'react-native-maps'
 import React, { useRef, useState } from 'react'
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { REACT_APP_GOOGLE_API_KEY } from '@env'
 import Constants from 'expo-constants'
 import Icon from 'react-native-vector-icons/FontAwesome'
-import { useNavigation } from '@react-navigation/native'
 
-const SelectorDireccionCliente = () => {
+const MapaAutoComplete = (props) => {
+
+    const { handleAddress } = props
 
     const [positionMarker, setPositionMarker] = useState({
         latitude: -33.444324,
@@ -16,7 +17,6 @@ const SelectorDireccionCliente = () => {
     const [marker, setMarker] = useState(false)
     const [direccion, setDireccion] = useState("")
     const mapRef = useRef()
-    const navigation = useNavigation()
 
     const moveTo = async (pos) => {
         const camera = await mapRef.current?.getCamera()
@@ -28,7 +28,7 @@ const SelectorDireccionCliente = () => {
     }
 
     return (
-        <View style={styles.containerMap}>
+        <View style={styles.container}>
             <MapView
                 ref={mapRef}
                 style={{
@@ -63,40 +63,37 @@ const SelectorDireccionCliente = () => {
                         })
                     }}
                     query={{
-                        key: { REACT_APP_GOOGLE_API_KEY },
+                        key: REACT_APP_GOOGLE_API_KEY,
                         language: 'es',
                     }}
                 />
-                {marker ? <TouchableOpacity style={styles.buttonCheck} onPress={() => navigation.navigate({
-                    name: 'Cliente',
-                    params: { direccion: direccion },
-                    merge: true,
-                })}>
+                {marker ? <TouchableOpacity
+                    style={styles.buttonCheck}
+                    onPress={() => handleAddress({
+                        Address: {
+                            direccion,
+                            positionMarker
+                        }
+                    })}>
                     <Icon name='check' size={25} color="#00a8a8" />
                 </TouchableOpacity> : <></>}
 
             </View>
 
+
+
         </View>
     )
 }
 
-export default SelectorDireccionCliente
+export default MapaAutoComplete
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: "white",
-        //justifyContent:"center"
-    },
-    containerMap: {
-        flex: 1,
         backgroundColor: "#fff",
         alignItems: "center",
-        justifyContent: "center",
-        //borderBottomWidth: 0,
-        //borderBottomColor: "lightgray",
-        //maxHeight: "50%"
+        justifyContent: "center"
     },
     searchContainer: {
         position: "absolute", width: "90%", backgroundColor: "white",

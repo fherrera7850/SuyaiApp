@@ -14,6 +14,8 @@ import PuntosScreen from './Screens/Puntos'
 import SelectorDireccionClienteScreen from './Screens/SelectorDireccionCliente';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font'
+import PedidosScreen from './Screens/Pedidos'
+import GenerarPedidoScreen from './Screens/GenerarPedido'
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -38,13 +40,28 @@ function Root() {
         options={
           {
             headerTitle: "Ingresar Venta",
-            title: "Venta",
+            title: "Ventas",
             headerTitleStyle: {
               fontFamily: "PromptSemiBold"
             },
             drawerLabelStyle: {
               fontFamily: "PromptRegular",
-              fontSize:20
+              fontSize: 20
+            }
+          }} />
+      <Drawer.Screen
+        name="Pedidos"
+        component={PedidosScreen}
+        options={
+          {
+            headerTitle: "Listado de Pedidos",
+            title: "Pedidos",
+            headerTitleStyle: {
+              fontFamily: "PromptSemiBold"
+            },
+            drawerLabelStyle: {
+              fontFamily: "PromptRegular",
+              fontSize: 20
             }
           }} />
       <Drawer.Screen
@@ -59,7 +76,7 @@ function Root() {
             },
             drawerLabelStyle: {
               fontFamily: "PromptRegular",
-              fontSize:20
+              fontSize: 20
             }
           }} />
       <Drawer.Screen
@@ -72,12 +89,12 @@ function Root() {
             },
             drawerLabelStyle: {
               fontFamily: "PromptRegular",
-              fontSize:20
+              fontSize: 20
             }
           }}
         name="SelectorFecha"
         component={SelectorFechaScreen} />
-        <Drawer.Screen
+      <Drawer.Screen
         options={
           {
             title: 'Clientes',
@@ -87,7 +104,7 @@ function Root() {
             },
             drawerLabelStyle: {
               fontFamily: "PromptRegular",
-              fontSize:20
+              fontSize: 20
             }
           }}
         name="Clientes"
@@ -109,6 +126,7 @@ export default function App() {
         <Stack.Screen name="Cliente" component={ClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Cliente", }} />
         <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Seleccione Dirección", }} />
         <Stack.Screen name="Puntos" component={PuntosScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Puntos", }} />
+        <Stack.Screen name="GenerarPedido" component={GenerarPedidoScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Pedido", }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
