@@ -131,17 +131,17 @@ const Cliente = ({ navigation, route }) => {
                     <ModalFooter>
                         <View style={{ flexDirection: "row" }}>
                             {!FromDetalleVenta ?
-                            <>
-                                <Pressable
-                                    style={styles.modalBotonNuevoCliente}
-                                    onPress={() => limpia()}>
-                                    <Text style={styles.textModalButtonFooter}>Nuevo Cliente</Text>
-                                </Pressable>
-                                <Pressable
-                                    style={styles.modalBotonVolver}
-                                    onPress={() => navigation.goBack()}>
-                                    <Text style={styles.textModalButtonFooter}>Volver</Text>
-                                </Pressable>
+                                <>
+                                    <Pressable
+                                        style={styles.modalBotonNuevoCliente}
+                                        onPress={() => limpia()}>
+                                        <Text style={styles.textModalButtonFooter}>Nuevo Cliente</Text>
+                                    </Pressable>
+                                    <Pressable
+                                        style={styles.modalBotonVolver}
+                                        onPress={() => navigation.goBack()}>
+                                        <Text style={styles.textModalButtonFooter}>Volver</Text>
+                                    </Pressable>
                                 </>
                                 :
                                 <Pressable
@@ -180,7 +180,7 @@ const Cliente = ({ navigation, route }) => {
                         <Icon style={styles.inputIcon} name="map-marker" size={20} color="#000" />
                         <TextInput style={styles.textInputFields}
                             placeholder="Dirección"
-                            onFocus={() => navigation.navigate("SelectorDireccionCliente")}
+                            onFocus={() => navigation.navigate("SelectorDireccionCliente", { Retorno: "Cliente" })}
                             value={direccion ? direccion : ""}
                             selection={{ start: 0, end: 0 }} />
                     </View>

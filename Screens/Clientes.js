@@ -86,7 +86,7 @@ const Clientes = ({ props }) => {
             return (<View style={{ margin: 5, backgroundColor: "transparent" }}>
 
                 <TextInput
-                    placeholder="Buscar..."
+                    placeholder="Buscar por Nombre o Dirección..."
                     //leftIcon={{ type: 'font-awesome', name: 'search' }}
                     autoFocus={pressBuscar}
                     onChangeText={(text) => searchFilter(text)}
@@ -115,7 +115,7 @@ const Clientes = ({ props }) => {
     const searchFilter = (text) => {
         if (text) {
             const newData = data.filter(item => {
-                const itemData = item.nombre ? item.nombre.toUpperCase() : ''.toUpperCase()
+                const itemData = `${item.nombre} ${item.direccion}` ? `${item.nombre} ${item.direccion}`.toUpperCase() : ''.toUpperCase()
                 const textData = text.toUpperCase()
                 return itemData.indexOf(textData) > -1
             })

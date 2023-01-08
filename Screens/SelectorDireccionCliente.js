@@ -3,11 +3,12 @@ import MapView, { Marker } from 'react-native-maps'
 import React, { useRef, useState } from 'react'
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { REACT_APP_GOOGLE_API_KEY } from '@env'
+
 import Constants from 'expo-constants'
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useNavigation } from '@react-navigation/native'
 
-const SelectorDireccionCliente = () => {
+const SelectorDireccionCliente = ({route}) => {
 
     const [positionMarker, setPositionMarker] = useState({
         latitude: -33.444324,
@@ -17,6 +18,8 @@ const SelectorDireccionCliente = () => {
     const [direccion, setDireccion] = useState("")
     const mapRef = useRef()
     const navigation = useNavigation()
+    const Retorno = route.params?.Retorno
+    console.log("🚀 ~ file: SelectorDireccionCliente.js:22 ~ SelectorDireccionCliente ~ route.params?.Retorno", route.params?.Retorno)
 
     const moveTo = async (pos) => {
         const camera = await mapRef.current?.getCamera()
@@ -63,12 +66,12 @@ const SelectorDireccionCliente = () => {
                         })
                     }}
                     query={{
-                        key: { REACT_APP_GOOGLE_API_KEY },
+                        key: REACT_APP_GOOGLE_API_KEY,
                         language: 'es',
                     }}
                 />
                 {marker ? <TouchableOpacity style={styles.buttonCheck} onPress={() => navigation.navigate({
-                    name: 'Cliente',
+                    name: Retorno,
                     params: { direccion: direccion },
                     merge: true,
                 })}>

@@ -22,6 +22,7 @@ const DetallePedido = ({ navigation, route, props }) => {
     const [obs, setObs] = useState("")
     const [valorDcto, setValorDcto] = useState("")
     const [porcentajeDcto, setPorcentajeDcto] = useState("")
+    const [loadingClientes, setLoadingClientes] = useState(false)
 
     const [selectedIndex, setSelectedIndex] = useState(0)
     const [habilitaDescuento, setHabilitaDescuento] = useState(false)
@@ -34,7 +35,8 @@ const DetallePedido = ({ navigation, route, props }) => {
     //DROPDOWN
     const [openDd, setOpenDd] = useState(false);
     const [valueDd, setValueDd] = useState(null);
-    const [itemsDd, setItemsDd] = useState([]);
+    const [clientesDd, setClientesDd] = useState([]);
+    const [filteredClientesDd, setFilteredClientesDd] = useState([]);
 
     const [PrecioTotal, setPrecioTotal] = useState(0)
     const [PrecioTotalDcto, setPrecioTotalDcto] = useState(0)
@@ -104,7 +106,8 @@ const DetallePedido = ({ navigation, route, props }) => {
         await fetchWithTimeout(REACT_APP_SV + '/api/cliente/', ROCliente)
             .then(response => response.json())
             .then(json => {
-                setItemsDd(json)
+                setClientesDd(json)
+                setFilteredClientesDd(json)
                 console.log("🚀 ~ file: DetalleVenta.js ~ line 81 ~ CargaClientes ~ json")
             })
             .catch(err => {
@@ -159,7 +162,8 @@ const DetallePedido = ({ navigation, route, props }) => {
                     Cliente_id: valueDd,
                     Fecha: getUTCDate(),
                     Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
-                    Observacion: obs.trim() === "" ? null : obs
+                    Observacion: obs.trim() === "" ? null : obs,
+                    Pedido: null
                 },
                 ProductosVenta: pedido
             })
@@ -255,19 +259,19 @@ const DetallePedido = ({ navigation, route, props }) => {
                 }
             ]
         );
-
-
-
     }
 
     const IngresaPedido = async () => {
         const NuevoPedido = {
-            Productos: pedido,
+            MedioPago: selectedIndex,
+            PrecioTotalVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal,
+            Cliente_id: valueDd,
+            Fecha: JSON.stringify(getUTCDate()),
             ValorDcto: valorDcto,
             PorcentajeDcto: porcentajeDcto,
             Observacion: obs,
-            MedioPago: selectedIndex,
-            Cliente: valueDd
+            Pedido: 1,
+            Productos: pedido,
         }
         navigation.navigate("GenerarPedido", { NuevoPedido: NuevoPedido })
     }
@@ -545,7 +549,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                             <DropDownPicker
                                 open={openDd}
                                 value={valueDd}
-                                items={itemsDd}
+                                items={filteredClientesDd}
                                 disabled={vistaVenta}
                                 schema={{
                                     label: 'nombre',
@@ -554,7 +558,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                 }}
                                 setOpen={setOpenDd}
                                 setValue={setValueDd}
-                                setItems={setItemsDd}
+                                setItems={setFilteredClientesDd}
                                 searchable={true}
                                 searchPlaceholder="Nombre o Direccion"
                                 placeholder='Seleccione Cliente...'
@@ -581,6 +585,25 @@ const DetallePedido = ({ navigation, route, props }) => {
                                         </TouchableOpacity>
                                     );
                                 }}
+                                loading={loadingClientes}
+                                disableLocalSearch={true} // required for remote search
+                                onChangeSearchText={(text) => {
+                                    if (text) {
+                                        // Show the loading animation
+                                        setLoadingClientes(true)
+                                        const newData = clientesDd.filter(item => {
+                                            const itemData = `${item.nombre} ${item.direccion}` ? `${item.nombre} ${item.direccion}`.toUpperCase() : ''.toUpperCase()
+                                            const textData = text.toUpperCase()
+                                            return itemData.indexOf(textData) > -1
+                                        })
+                                        setLoadingClientes(false)
+                                        setFilteredClientesDd(newData)
+                                    } else {
+                                        setLoadingClientes(false)
+                                        setFilteredClientesDd(clientesDd)
+                                    }
+                                }}
+                                onSelectItem={() => setFilteredClientesDd(clientesDd)}
                             />
 
                             {/* Si es vista no se muestra opcion de nuevo cliente */}
@@ -608,7 +631,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                         <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
                                     </View>
                                 </Pressable>
-                                    <Pressable disabled style={styles.BotonGenerarPedido} onPress={() => IngresaPedido()} >
+                                    <Pressable style={styles.BotonGenerarPedido} onPress={() => IngresaPedido()} >
                                         <View style={{ flexDirection: "row" }}>
                                             <Text style={styles.TextoFinalizar}>Generar Pedido</Text>
                                             <Icon name='send' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
@@ -684,7 +707,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#ffbd59',
         //height: 60,
         marginHorizontal: 5,
-        opacity: 0.5
+        //opacity: 0.5
     },
     BotonEliminar: {
         alignItems: 'center',
