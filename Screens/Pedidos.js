@@ -4,10 +4,10 @@ import { Agenda, LocaleConfig } from 'react-native-calendars';
 import { Card } from 'react-native-paper';
 
 LocaleConfig.locales['es'] = {
-  monthNames: ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'],
-  monthNamesShort: ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sept','Oct','Nov','Dic'],
-  dayNames: ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'],
-  dayNamesShort: ['Dom','Lun','Mar','Mie','Jue','Vie','Sab']
+  monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+  monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sept', 'Oct', 'Nov', 'Dic'],
+  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
 };
 
 LocaleConfig.defaultLocale = 'es';
@@ -46,11 +46,39 @@ const Pedidos = () => {
         newItems[key] = items[key];
       });
 
-      console.log("🚀 ~ file: Pedidos.js ~ line 44 ~ setTimeout ~ newItems", newItems)
+      const eventos = {
+        "2022-10-07": [
+          {
+            "day": "2022-10-07",
+            "height": 50,
+            "name": "Item for 2022-10-07 #0",
+          },
+          {
+            "day": "2022-10-07",
+            "height": 29,
+            "name": "Item for 2022-10-07 #1",
+          },
+          {
+            "day": "2022-10-07",
+            "height": 25,
+            "name": "Item for 2022-10-07 #2",
+          },
+        ],
+        "2022-10-08": [
+          {
+            "day": "2022-10-08",
+            "height": 19,
+            "name": "Item for 2022-10-08 #0",
+          },
+        ]
+      }
       
-      setItems(newItems);
+      setItems(eventos);
+      //setItems(newItems);
     }, 1000);
   }
+
+  
 
   const renderItem = (item) => {
     return (

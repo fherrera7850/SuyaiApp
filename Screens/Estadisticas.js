@@ -87,12 +87,12 @@ const Estadisticas = ({ navigation, route }) => {
 
         <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
           <Text style={styles.TextoTitulos}>Productos Más Vendidos</Text>
-          <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas.MasVendidos[0].nombre : ""}</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas?.MasVendidos[0]?.nombre : ""}</Text>
         </Pressable>
 
         <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
           <Text style={styles.TextoTitulos}>Medios de Pago Más Utilizados</Text>
-          <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas.MediosDePago[0].mediopago : ""}</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas?.MediosDePago[0]?.mediopago : ""}</Text>
         </Pressable>
 
       </View>

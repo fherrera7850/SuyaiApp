@@ -69,6 +69,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                 return x.Cantidad > 0;
             });
             setPedido(TempPedido)
+            console.log("🚀 ~ file: DetalleVenta.js:78 ~ useEffect ~ TempPedido", TempPedido)
             let totalTemp = 0;
             TempPedido.forEach(element => {
                 totalTemp += (element.Precio * element.Cantidad)
@@ -162,10 +163,10 @@ const DetallePedido = ({ navigation, route, props }) => {
                     Cliente_id: valueDd,
                     Fecha: getUTCDate(),
                     Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
-                    Observacion: obs.trim() === "" ? null : obs,
-                    Pedido: null
+                    Observacion: obs.trim() === "" ? null : obs
                 },
-                ProductosVenta: pedido
+                ProductosVenta: pedido,
+                Pedido: null
             })
         };
         console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
