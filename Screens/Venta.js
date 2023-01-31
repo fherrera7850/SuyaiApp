@@ -7,6 +7,8 @@ import { useFonts } from 'expo-font'
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Input } from "@rneui/themed";
 import cloneDeep from 'lodash.clonedeep';
+import { useDispatch, useSelector } from 'react-redux';
+import { setProductos } from "../Features/Venta/ProductoVentaSlice";
 
 const RealizarPedido = ({ navigation, route }) => {
 
@@ -143,7 +145,10 @@ const RealizarPedido = ({ navigation, route }) => {
         }
     });
 
-    const [products, setProducts] = useState([])
+    const dispatch = useDispatch();
+    const ProductosRedux = useSelector((state) => state.productos);
+
+    //const [products, setProducts] = useState([])
     const [contItem, setContItem] = useState(0)
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
@@ -164,13 +169,17 @@ const RealizarPedido = ({ navigation, route }) => {
             console.log(route)
             Limpiar()
         }
+        if (route.params && route.params.EditarPedido) {
+            console.log("🚀 ~ file: Venta.js:168 ~ useEffect ~ route.params.EditarPedido", route.params.EditarPedido)
+            cargaProductos(route.params.EditarPedido.Productos)
+        }
     }, [route.params])
 
     useEffect(() => {
         cargaProductos()
     }, [])
 
-    async function cargaProductos() {
+    async function cargaProductos(id_pedido = null) {
         try {
             setLoading(true)
             var RO = {
@@ -187,15 +196,19 @@ const RealizarPedido = ({ navigation, route }) => {
                         element.Cantidad = 0
                     });
                     console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
-                    setProducts(json)
+                    dispatch(setProductos(json))
+                    //setProducts(json)
+
+
                     setLoading(false)
                 })
 
         } catch (error) {
+            //console.log("🚀 ~ file: Venta.js:206 ~ cargaProductos ~ error", error)
             setLoading(false)
             Alert.alert(
                 "ERROR  ",
-                "No se han podido cargar los productos",
+                "No se han podido cargar los productos" + error,
                 [
                     {
                         text: "Cancelar",
@@ -226,7 +239,9 @@ const RealizarPedido = ({ navigation, route }) => {
                     element.Cantidad += 1
                 }
             })
-            setProducts(ArrayProductos)
+            dispatch(setProductos(ArrayProductos))
+            //setProducts(ArrayProductos)
+            //
             setTotal(totalTemp)
         } else {
             setContItem(contItem - 1)
@@ -237,7 +252,9 @@ const RealizarPedido = ({ navigation, route }) => {
                     element.Cantidad -= 1
                 }
             })
-            setProducts(ArrayProductos)
+            dispatch(setProductos(ArrayProductos))
+            //setProducts(ArrayProductos)
+            //
             setTotal(totalTemp)
         }
     }
@@ -248,14 +265,17 @@ const RealizarPedido = ({ navigation, route }) => {
     }
 
     const Limpiar = () => {
-        let ArrayProductos = products
+        /* let ArrayProductos = products
         ArrayProductos.forEach(element => {
             element.Cantidad = 0
         })
-        setProducts(ArrayProductos)
+        dispatch(setProductos(ArrayProductos))
+        //setProducts(ArrayProductos)
+        //
         setTotal(0)
         setContItem(0)
-        console.log("Limpia")
+        console.log("Limpia") */
+        console.log("ProductosRedux", ProductosRedux)
     }
 
     const ModificaCantidad = () => {
@@ -275,7 +295,9 @@ const RealizarPedido = ({ navigation, route }) => {
 
         setContItem(contItem + diferenciaCantidad)
         setTotal(totalTemp)
-        setProducts(productos)
+        dispatch(setProductos(productos))
+        //setProducts(productos)
+        //
         setCantidad("")
         setModalVisible(false)
     }
@@ -289,7 +311,7 @@ const RealizarPedido = ({ navigation, route }) => {
         } else {
             return (
 
-                <View style={{ flex: 1, backgroundColor:"white" }}>
+                <View style={{ flex: 1, backgroundColor: "white" }}>
                     <Modal
                         animationType="slide"
                         transparent={true}
@@ -349,7 +371,7 @@ const RealizarPedido = ({ navigation, route }) => {
                     <View style={{ flex: 5 }}>
                         <ScrollView>
                             {
-                                products.map((item, index) => {
+                                ProductosRedux?.map((item, index) => {
                                     return (
                                         <TouchableOpacity key={index} style={styles.itemContainer} onPress={() => agregarQuitarItem(item, true)}>
                                             <Image

@@ -209,6 +209,8 @@ const GenerarPedido = ({ route, navigation }) => {
                     Telefono: telefono.trim() === "" ? null : telefono.trim(),
                     FechaEntrega: fechaEntregaDate,
                     Nota: nota.trim() === "" ? null : nota.trim(),
+                    FechaCreacion: getUTCDate(),
+                    Estado: "I"
                 }
             })
         };

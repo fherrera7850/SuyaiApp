@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { formatDateString } from "../Components/util";
 import { useFonts } from 'expo-font'
+import * as Clipboard from 'expo-clipboard';
 
 const SelectorFecha = ({ navigation }) => {
 
@@ -53,9 +54,9 @@ const SelectorFecha = ({ navigation }) => {
     if (!fontsLoaded) return null
 
     return (
-        <SafeAreaView style={{ flex: 1, backgroundColor:"white" }}>
+        <SafeAreaView style={{ flex: 1, backgroundColor: "white" }}>
             <View style={styles.MainContainer}>
-
+                
                 <View style={{ flexDirection: "row", alignItems: "center" }}>
                     <Pressable onPress={showDatePickerDesde}>
                         <TextInput placeholder="Desde" style={styles.InputFecha} editable={false} value={dateDesdeStr} />
@@ -138,7 +139,7 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         marginTop: 20,
         fontSize: 20,
-        fontFamily:"PromptRegular"
+        fontFamily: "PromptRegular"
     },
     TextoTitulo: {
         fontSize: 25
@@ -159,7 +160,7 @@ const styles = StyleSheet.create({
     TextoAplicarFiltro: {
         fontSize: 20,
         color: 'white',
-        fontFamily:"PromptSemiBold"
+        fontFamily: "PromptSemiBold"
     },
     // Style for iOS ONLY...
     datePicker: {

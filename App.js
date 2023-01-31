@@ -16,6 +16,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useFonts } from 'expo-font'
 import PedidosScreen from './Screens/Pedidos'
 import GenerarPedidoScreen from './Screens/GenerarPedido'
+import { Provider } from 'react-redux';
+import { store } from './App/store';
 
 const Drawer = createDrawerNavigator();
 const Stack = createNativeStackNavigator();
@@ -116,18 +118,20 @@ function Root() {
 
 export default function App() {
   return (
-    <NavigationContainer>
-      <Stack.Navigator>
-        <Stack.Screen name="Root" component={Root} options={{ headerShown: false }} />
-        <Stack.Screen options={{ title: 'Detalle Venta', headerTitleStyle: { fontFamily: "PromptSemiBold" } }} name="DetalleVenta" component={DetalleVentaScreen} />
-        <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title: "Estadísticas", headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
-        <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
-        <Stack.Screen name="DetalleEstadistica" component={DetalleEstadisticaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Detalle", }} />
-        <Stack.Screen name="Cliente" component={ClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Cliente", }} />
-        <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Seleccione Dirección", }} />
-        <Stack.Screen name="Puntos" component={PuntosScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Puntos", }} />
-        <Stack.Screen name="GenerarPedido" component={GenerarPedidoScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Completar Pedido", }} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <Provider store={store}>
+      <NavigationContainer>
+        <Stack.Navigator>
+          <Stack.Screen name="Root" component={Root} options={{ headerShown: false }} />
+          <Stack.Screen options={{ title: 'Detalle Venta', headerTitleStyle: { fontFamily: "PromptSemiBold" } }} name="DetalleVenta" component={DetalleVentaScreen} />
+          <Stack.Screen name="Estadisticas" component={EstadisticasScreen} options={{ headerTitle: "Estadísticas", title: "Estadísticas", headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
+          <Stack.Screen name="VentaOk" component={VentaOkScreen} options={{ headerShown: false, headerTitleStyle: { fontFamily: "PromptSemiBold" } }} />
+          <Stack.Screen name="DetalleEstadistica" component={DetalleEstadisticaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Detalle", }} />
+          <Stack.Screen name="Cliente" component={ClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Nuevo Cliente", }} />
+          <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Seleccione Dirección", }} />
+          <Stack.Screen name="Puntos" component={PuntosScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Puntos", }} />
+          <Stack.Screen name="GenerarPedido" component={GenerarPedidoScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Completar Pedido", }} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </Provider>
   );
 }

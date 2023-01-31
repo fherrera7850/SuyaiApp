@@ -10,10 +10,14 @@ import DropDownPicker from 'react-native-dropdown-picker'
 import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import { useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
+import { useDispatch, useSelector } from 'react-redux';
 
 const DetallePedido = ({ navigation, route, props }) => {
 
     //HOOKS
+    const ProductosRedux = useSelector((state) => state.productos);
+   
+
     const [pedido, setPedido] = useState([])
     const [modalDescuentosVisible, setModalDescuentosVisible] = useState(false)
     const [modalProductoVisible, setModalProductoVisible] = useState(false)
@@ -28,6 +32,7 @@ const DetallePedido = ({ navigation, route, props }) => {
     const [habilitaDescuento, setHabilitaDescuento] = useState(false)
 
     const [vistaVenta, setVistaVenta] = useState(false)
+    const [vistaPedido, setVistaPedido] = useState(false)
     const [gananciaVenta, setGananciaVenta] = useState(0)
 
     const isFocused = useIsFocused();
@@ -62,6 +67,7 @@ const DetallePedido = ({ navigation, route, props }) => {
 
         //OPERACIONES
         CargaClientes()
+        console.log("🚀 ~ file: DetalleVenta.js:18 ~ DetallePedido ~ ProductosRedux", ProductosRedux)
 
         let TempPedido = []
         if (route.params.pedido) {
@@ -78,8 +84,13 @@ const DetallePedido = ({ navigation, route, props }) => {
         }
         else if (route.params.VentaHistorial) {
             console.log("🚀 ~ file: DetalleVenta.js:23 ~ DetallePedido ~ route.params.VentaHistorial", route.params.VentaHistorial)
-            cargaVentaHistorial(route.params.VentaHistorial)
+            cargaVentaPorId(route.params.VentaHistorial)
             setVistaVenta(true)
+        }
+        else if (route.params.VentaPedido) {
+            console.log("🚀 ~ file: DetalleVenta.js:23 ~ DetallePedido ~ route.params.VentaPedido", route.params.VentaPedido)
+            cargaVentaPorId(route.params.VentaPedido)
+            setVistaPedido(true)
         }
 
 
@@ -94,6 +105,10 @@ const DetallePedido = ({ navigation, route, props }) => {
         if (vistaVenta)
             navigation.setOptions({
                 headerTitle: `Detalle Venta N°${pedido[0]?._idv}`
+            })
+        if (vistaPedido)
+            navigation.setOptions({
+                headerTitle: `Detalle Pedido N°${pedido[0]?._idp}`
             })
     }, [navigation, pedido])
 
@@ -119,7 +134,7 @@ const DetallePedido = ({ navigation, route, props }) => {
             })
     }
 
-    const cargaVentaHistorial = async (_id) => {
+    const cargaVentaPorId = async (_id) => {
         const ROVenta = {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
@@ -131,6 +146,11 @@ const DetallePedido = ({ navigation, route, props }) => {
             .then(json => {
                 setPedido(json)
                 setPrecioTotal(json[0].PrecioTotalVenta)
+                setSelectedIndex(json[0].MedioPago)
+                if (json[0].Dcto) {
+                    setPrecioTotal(json[0].PrecioTotalVenta + json[0].Dcto)
+                    setPrecioTotalDcto(json[0].PrecioTotalVenta)
+                }
                 setValueDd(json[0].Cliente_id)
                 let costo = 0
                 json.forEach(e => {
@@ -150,12 +170,14 @@ const DetallePedido = ({ navigation, route, props }) => {
     }
 
     const IngresaVenta = async () => {
+
         setCargandoVenta(true)
-        //throw new Error("Error")
-        const ROVenta = {
+
+        let url = REACT_APP_SV + '/api/venta/'
+        let ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            timeout: 5000,
+            timeout: 10000,
             body: JSON.stringify({
                 Venta: {
                     MedioPago: selectedIndex,
@@ -171,7 +193,20 @@ const DetallePedido = ({ navigation, route, props }) => {
         };
         console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
 
-        await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
+        if (vistaPedido) {
+            url = REACT_APP_SV + '/api/pedidoVenta/CompletaPedidoVenta'
+            ROVenta = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 10000,
+                body: JSON.stringify({
+                    id_venta: pedido[0]._idv,
+                    id_pedido: pedido[0]._idp
+                })
+            }
+        }
+
+        await fetchWithTimeout(url, ROVenta)
             .then(response => {
                 if (response.status === 200) {
                     setCargandoVenta(false)
@@ -207,7 +242,7 @@ const DetallePedido = ({ navigation, route, props }) => {
 
         Alert.alert(
             "Confirmación",
-            "¿Desea eliminar esta venta?",
+            vistaPedido ? "¿Desea eliminar este pedido?" : "¿Desea eliminar esta venta?",
             [
                 {
                     text: "Cancelar",
@@ -223,14 +258,20 @@ const DetallePedido = ({ navigation, route, props }) => {
                         const RODelete = {
                             method: 'DELETE',
                             headers: { 'Content-Type': 'application/json' },
-                            timeout: 5000
+                            timeout: 10000
                         };
 
-                        await fetchWithTimeout(REACT_APP_SV + `/api/venta/${pedido[0]?._idv}`, RODelete)
+                        let url = REACT_APP_SV + `/api/venta/${pedido[0]?._idv}`
+                        await fetchWithTimeout(url, RODelete)
                             .then(response => {
                                 if (response.status === 200) {
                                     setCargandoVenta(false)
-                                    navigation.navigate("Historial")
+                                    if (vistaPedido) {
+                                        navigation.navigate("Pedidos")
+                                    } else {
+                                        navigation.navigate("Historial")
+                                    }
+
                                 }
                                 else {
                                     setCargandoVenta(false)
@@ -339,6 +380,51 @@ const DetallePedido = ({ navigation, route, props }) => {
         return/*  cantidadProductoModificar.trim() === "" || */ precioProductoModificar.trim() === "" ||
             //isNaN(cantidadProductoModificar) ||
             isNaN(precioProductoModificar)
+    }
+
+    const Botones = () => {
+        if (vistaVenta) {
+            return (<Pressable style={styles.BotonEliminar} onPress={() => EliminaVenta()} >
+                <View style={{ flexDirection: "row" }}>
+                    <Text style={styles.TextoFinalizar}>Eliminar Venta</Text>
+                    <Icon name='trash' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 10 }} />
+                </View>
+            </Pressable>)
+        }
+        else if (vistaPedido) {
+            return (<><Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
+                <View style={{ flexDirection: "row" }}>
+                    <Text style={styles.TextoFinalizar}>Ingresar Venta</Text>
+                    <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
+                </View>
+            </Pressable>
+                <Pressable disabled style={[styles.BotonModificarProductos, styles.disabled]} onPress={() => ModificaProductosPedido()} >
+                    <View style={{ flexDirection: "row" }}>
+                        <Text style={styles.TextoFinalizar}>Modificar Productos</Text>
+                        <Icon name='shopping-cart' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
+                    </View>
+                </Pressable>
+                <Pressable style={styles.BotonEliminar} onPress={() => EliminaVenta()} >
+                    <View style={{ flexDirection: "row" }}>
+                        <Text style={styles.TextoFinalizar}>Eliminar Pedido</Text>
+                        <Icon name='trash' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
+                    </View>
+                </Pressable></>)
+        }
+        else {
+            return (<><Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
+                <View style={{ flexDirection: "row" }}>
+                    <Text style={styles.TextoFinalizar}>Ingresar Venta</Text>
+                    <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
+                </View>
+            </Pressable>
+                <Pressable style={styles.BotonGenerarPedido} onPress={() => IngresaPedido()} >
+                    <View style={{ flexDirection: "row" }}>
+                        <Text style={styles.TextoFinalizar}>Generar Pedido</Text>
+                        <Icon name='send' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
+                    </View>
+                </Pressable></>)
+        }
     }
 
     {
@@ -542,6 +628,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                 selectedButtonStyle={{
                                     backgroundColor: "#00a8a8"
                                 }}
+                                
                             />
                         </View>
 
@@ -620,24 +707,8 @@ const DetallePedido = ({ navigation, route, props }) => {
                         {/* BotonesFinalizar */}
                         <View style={{ flex: 1 }}>
                             {/* Si es vista se muestra boton eliminar */}
-                            {vistaVenta ? <Pressable style={styles.BotonEliminar} onPress={() => EliminaVenta()} >
-                                <View style={{ flexDirection: "row" }}>
-                                    <Text style={styles.TextoFinalizar}>Eliminar Venta</Text>
-                                    <Icon name='trash' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 10 }} />
-                                </View>
-                            </Pressable> :
-                                <><Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
-                                    <View style={{ flexDirection: "row" }}>
-                                        <Text style={styles.TextoFinalizar}>Ingresar Venta</Text>
-                                        <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
-                                    </View>
-                                </Pressable>
-                                    <Pressable style={styles.BotonGenerarPedido} onPress={() => IngresaPedido()} >
-                                        <View style={{ flexDirection: "row" }}>
-                                            <Text style={styles.TextoFinalizar}>Generar Pedido</Text>
-                                            <Icon name='send' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
-                                        </View>
-                                    </Pressable></>}
+                            {Botones()}
+
 
                         </View>
                     </View>
@@ -710,13 +781,28 @@ const styles = StyleSheet.create({
         marginHorizontal: 5,
         //opacity: 0.5
     },
+    BotonModificarProductos: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 7,
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#f06744',
+        //height: 60,
+        marginHorizontal: 5,
+        //opacity: 0.5
+    },
+    disabled: {
+        opacity: 0.5
+    },
     BotonEliminar: {
         alignItems: 'center',
         justifyContent: 'center',
         borderRadius: 4,
         elevation: 3,
         backgroundColor: '#ff5757',
-        marginHorizontal: 5
+        marginHorizontal: 5,
+        marginTop: 5
     },
     TextNombre: {
         fontFamily: "PromptRegular",

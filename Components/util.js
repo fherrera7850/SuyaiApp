@@ -82,6 +82,20 @@ export const getUTCDate = (dateParam) => {
     return (new Date(dateutc))
 }
 
+export const FormatoWhatsapp = (tel) => {
+    let formateado = tel.replace(/\s+/g, '');
+    formateado = formateado.split("+").join("")
+    let largo = formateado.length;
+    if (largo === 11)
+        formateado = "+" + formateado
+    if (largo === 9)
+        formateado = "+56" + formateado
+    if (largo === 8)
+        formateado = "+569" + formateado
+
+    return formateado
+}
+
 
 
 
