@@ -72,7 +72,7 @@ const SelectorDireccionCliente = ({route}) => {
                 />
                 {marker ? <TouchableOpacity style={styles.buttonCheck} onPress={() => navigation.navigate({
                     name: Retorno,
-                    params: { direccion: direccion },
+                    params: { direccionMapa: direccion },
                     merge: true,
                 })}>
                     <Icon name='check' size={25} color="#00a8a8" />

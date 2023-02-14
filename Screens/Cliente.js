@@ -8,8 +8,12 @@ import Loader from '../Components/Loader'
 import { REACT_APP_SV } from "@env"
 import { fetchWithTimeout } from "./../Components/util"
 import ReusableModal, { ModalFooter } from '../Components/ReusableModal'
+import { useDispatch } from 'react-redux'
+import { setCliente_id } from '../Features/Venta/VentaSlice'
 
 const Cliente = ({ navigation, route }) => {
+
+    const dispatch = useDispatch()
 
     const [nombre, setNombre] = useState("")
     const [objDireccion, setObjDireccion] = useState({})
@@ -59,9 +63,9 @@ const Cliente = ({ navigation, route }) => {
 
         await fetchWithTimeout(REACT_APP_SV + '/api/cliente/', ROCliente)
             .then(response => {
-                console.log("response.status", response.status)
+                //console.log("response", response)
                 if (response.status === 200) {
-                    console.log("RESULTADO INSERCION CLIENTE: ", JSON.stringify(response))
+                    console.log("RESULTADO INSERCION CLIENTE: ", response)
                     setCargando(false)
                     //navigation.navigate("VentaOk", { ClienteCreado: objCliente })
                     setModalVisibleClienteOK(true)
@@ -146,6 +150,7 @@ const Cliente = ({ navigation, route }) => {
                                 :
                                 <Pressable
                                     style={styles.modalBotonVolverVenta}
+                                    //onPress={() => {dispatch(setCliente_id());navigation.goBack()}}>
                                     onPress={() => navigation.goBack()}>
                                     <Text style={styles.textModalButtonFooter}>Continuar Venta</Text>
                                 </Pressable>

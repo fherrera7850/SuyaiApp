@@ -11,24 +11,26 @@ import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import { useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
+import { setMedioPago, setCliente_id, setDcto, setObservacion, resetV, setPrecioTotalVenta } from "../Features/Venta/VentaSlice";
+import { updatePreciounitario } from '../Features/Venta/ProductoVentaSlice';
+import { resetP } from '../Features/Venta/PedidoSlice';
+import cloneDeep from 'lodash.clonedeep';
 
 const DetallePedido = ({ navigation, route, props }) => {
 
-    //HOOKS
+    //REDUX
+    const dispatch = useDispatch();
     const ProductosRedux = useSelector((state) => state.productos);
-   
+    const VentaRedux = useSelector((state) => state.Venta);
 
-    const [pedido, setPedido] = useState([])
     const [modalDescuentosVisible, setModalDescuentosVisible] = useState(false)
     const [modalProductoVisible, setModalProductoVisible] = useState(false)
     const [modalObservacionVisible, setModaObservacionlVisible] = useState(false)
 
-    const [obs, setObs] = useState("")
     const [valorDcto, setValorDcto] = useState("")
     const [porcentajeDcto, setPorcentajeDcto] = useState("")
     const [loadingClientes, setLoadingClientes] = useState(false)
 
-    const [selectedIndex, setSelectedIndex] = useState(0)
     const [habilitaDescuento, setHabilitaDescuento] = useState(false)
 
     const [vistaVenta, setVistaVenta] = useState(false)
@@ -39,17 +41,12 @@ const DetallePedido = ({ navigation, route, props }) => {
 
     //DROPDOWN
     const [openDd, setOpenDd] = useState(false);
-    const [valueDd, setValueDd] = useState(null);
     const [clientesDd, setClientesDd] = useState([]);
     const [filteredClientesDd, setFilteredClientesDd] = useState([]);
-
-    const [PrecioTotal, setPrecioTotal] = useState(0)
-    const [PrecioTotalDcto, setPrecioTotalDcto] = useState(0)
 
     const [cargandoVenta, setCargandoVenta] = useState(false)
 
     const [productoModificar, setProductoModificar] = useState({})
-    //const [cantidadProductoModificar, setCantidadProductoModificar] = useState("")
     const [precioProductoModificar, setPrecioProductoModificar] = useState("")
 
     const [fontsLoaded] = useFonts({
@@ -67,41 +64,40 @@ const DetallePedido = ({ navigation, route, props }) => {
 
         //OPERACIONES
         CargaClientes()
-        console.log("🚀 ~ file: DetalleVenta.js:18 ~ DetallePedido ~ ProductosRedux", ProductosRedux)
 
-        let TempPedido = []
-        if (route.params.pedido) {
-            TempPedido = route.params.pedido.filter((x) => {
-                return x.Cantidad > 0;
-            });
-            setPedido(TempPedido)
-            console.log("🚀 ~ file: DetalleVenta.js:78 ~ useEffect ~ TempPedido", TempPedido)
-            let totalTemp = 0;
-            TempPedido.forEach(element => {
+        let TempPedido = cloneDeep(ProductosRedux)
+        TempPedido = TempPedido.filter((x) => {
+            return x.Cantidad > 0;
+        });
+        let totalTemp = 0;
+        TempPedido.forEach(element => {
+            if (element.PrecioVenta > 0) {
+                totalTemp += (element.PrecioVenta * element.Cantidad)
+            } else {
                 totalTemp += (element.Precio * element.Cantidad)
-            });
-            setPrecioTotal(totalTemp)
+            }
+
+        });
+        dispatch(setPrecioTotalVenta(totalTemp))
+        if (VentaRedux.Dcto > 0) {
+            dispatch(setPrecioTotalVenta(totalTemp - VentaRedux.Dcto))
         }
-        else if (route.params.VentaHistorial) {
+
+        if (route.params?.VentaHistorial) {
             console.log("🚀 ~ file: DetalleVenta.js:23 ~ DetallePedido ~ route.params.VentaHistorial", route.params.VentaHistorial)
             cargaVentaPorId(route.params.VentaHistorial)
             setVistaVenta(true)
         }
-        else if (route.params.VentaPedido) {
+        else if (route.params?.VentaPedido) {
             console.log("🚀 ~ file: DetalleVenta.js:23 ~ DetallePedido ~ route.params.VentaPedido", route.params.VentaPedido)
             cargaVentaPorId(route.params.VentaPedido)
             setVistaPedido(true)
         }
 
-
-
-        //Carga clientes luego setea 
-
-
-
     }, [props, isFocused])
 
-    useEffect(() => {
+    //ID VENTA EN LA CABECERA
+    /* useEffect(() => {
         if (vistaVenta)
             navigation.setOptions({
                 headerTitle: `Detalle Venta N°${pedido[0]?._idv}`
@@ -110,9 +106,10 @@ const DetallePedido = ({ navigation, route, props }) => {
             navigation.setOptions({
                 headerTitle: `Detalle Pedido N°${pedido[0]?._idp}`
             })
-    }, [navigation, pedido])
+    }, [navigation, pedido]) */
 
     const CargaClientes = async () => {
+        setLoadingClientes(true)
         const ROCliente = {
             method: 'GET',
             headers: { 'Content-Type': 'application/json' },
@@ -130,7 +127,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                 Alert.alert("Error: ", "No se han podido cargar los clientes");
             })
             .finally(() => {
-
+                setLoadingClientes(false)
             })
     }
 
@@ -144,14 +141,12 @@ const DetallePedido = ({ navigation, route, props }) => {
         await fetchWithTimeout(REACT_APP_SV + `/api/venta/${_id}`, ROVenta)
             .then(response => response.json())
             .then(json => {
-                setPedido(json)
-                setPrecioTotal(json[0].PrecioTotalVenta)
-                setSelectedIndex(json[0].MedioPago)
+                dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta))
+                dispatch(setMedioPago(json[0].MedioPago))
                 if (json[0].Dcto) {
-                    setPrecioTotal(json[0].PrecioTotalVenta + json[0].Dcto)
-                    setPrecioTotalDcto(json[0].PrecioTotalVenta)
+                    dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta - json[0].Dcto))
                 }
-                setValueDd(json[0].Cliente_id)
+                dispatch(setCliente_id(json[0].Cliente_id))
                 let costo = 0
                 json.forEach(e => {
                     costo += e.Costo * e.Cantidad
@@ -166,7 +161,8 @@ const DetallePedido = ({ navigation, route, props }) => {
 
     const handlePressDdCliente = (props) => {
         props.onPress(props);
-        setValueDd(props.item._id)
+        //setValueDd(props.item._id)
+        dispatch(setCliente_id(props.item._id))
     }
 
     const IngresaVenta = async () => {
@@ -174,26 +170,35 @@ const DetallePedido = ({ navigation, route, props }) => {
         setCargandoVenta(true)
 
         let url = REACT_APP_SV + '/api/venta/'
+
+        let objProductosFiltrados = cloneDeep(ProductosRedux)
+        objProductosFiltrados = objProductosFiltrados.filter((x) => {
+            return x.Cantidad > 0;
+        });
+
+        let objCompleto = {
+            Venta: {
+                MedioPago: VentaRedux.MedioPago,
+                PrecioTotalVenta: VentaRedux.PrecioTotalVenta,
+                Cliente_id: VentaRedux.Cliente_id,
+                Fecha: getUTCDate(),
+                Dcto: VentaRedux.Dcto,
+                Observacion: VentaRedux.Observacion ? VentaRedux.Observacion.trim() : null
+            },
+            ProductosVenta: objProductosFiltrados,
+            Pedido: null
+        }
+
         let ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             timeout: 10000,
-            body: JSON.stringify({
-                Venta: {
-                    MedioPago: selectedIndex,
-                    PrecioTotalVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal,
-                    Cliente_id: valueDd,
-                    Fecha: getUTCDate(),
-                    Dcto: PrecioTotalDcto > 0 ? PrecioTotal - PrecioTotalDcto : 0,
-                    Observacion: obs.trim() === "" ? null : obs
-                },
-                ProductosVenta: pedido,
-                Pedido: null
-            })
+            body: JSON.stringify(objCompleto)
         };
+
         console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
 
-        if (vistaPedido) {
+        /* if (vistaPedido) {
             url = REACT_APP_SV + '/api/pedidoVenta/CompletaPedidoVenta'
             ROVenta = {
                 method: 'POST',
@@ -204,13 +209,16 @@ const DetallePedido = ({ navigation, route, props }) => {
                     id_pedido: pedido[0]._idp
                 })
             }
-        }
+        } */
 
         await fetchWithTimeout(url, ROVenta)
             .then(response => {
                 if (response.status === 200) {
+                    let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
                     setCargandoVenta(false)
-                    navigation.navigate("VentaOk", { MontoVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal })
+                    dispatch(resetV())
+                    dispatch(resetP())
+                    navigation.navigate("VentaOk", { MontoVenta: ptv })
                 }
                 else {
                     setCargandoVenta(false)
@@ -271,7 +279,6 @@ const DetallePedido = ({ navigation, route, props }) => {
                                     } else {
                                         navigation.navigate("Historial")
                                     }
-
                                 }
                                 else {
                                     setCargandoVenta(false)
@@ -304,34 +311,33 @@ const DetallePedido = ({ navigation, route, props }) => {
     }
 
     const IngresaPedido = async () => {
-        const NuevoPedido = {
-            MedioPago: selectedIndex,
-            PrecioTotalVenta: PrecioTotalDcto > 0 ? PrecioTotalDcto : PrecioTotal,
-            Cliente_id: valueDd,
-            Fecha: JSON.stringify(getUTCDate()),
-            ValorDcto: valorDcto,
-            PorcentajeDcto: porcentajeDcto,
-            Observacion: obs,
-            Pedido: 1,
-            Productos: pedido,
-        }
-        navigation.navigate("GenerarPedido", { NuevoPedido: NuevoPedido })
+        navigation.navigate("GenerarPedido")
     }
 
     const AplicarDcto = () => {
-        if (valorDcto !== "" && valorDcto < PrecioTotal) {
-            setPrecioTotalDcto(PrecioTotal - valorDcto)
+
+        let PTV = cloneDeep(VentaRedux.PrecioTotalVenta)
+
+        if (valorDcto !== "" && valorDcto < PTV) {
+            dispatch(setDcto(valorDcto))
+            dispatch(setPrecioTotalVenta(PTV - valorDcto))
         } else if (porcentajeDcto !== "" && porcentajeDcto < 100) {
-            setPrecioTotalDcto(PrecioTotal * (1 - (porcentajeDcto / 100)))
+            let dctoTotal = PTV - (PTV * (1 - (porcentajeDcto / 100)))
+            dispatch(setDcto(dctoTotal))
+            dispatch(setPrecioTotalVenta(PTV - dctoTotal))
         }
 
         setModalDescuentosVisible(false)
     }
 
     const PrecioAnteriorTachado = () => {
-        if (PrecioTotalDcto > 0) {
+
+        let PTV = cloneDeep(parseInt(VentaRedux.PrecioTotalVenta))
+        let DCTO = cloneDeep(parseInt(VentaRedux.Dcto))
+
+        if (DCTO > 0) {
             return (<View style={{ flexDirection: "row", justifyContent: 'flex-end' }}>
-                <Text style={styles.TextoPrecioTotalTachado}>{"$ " + formatoMonedaChileno(PrecioTotal)}</Text>
+                <Text style={styles.TextoPrecioTotalTachado}>{"$ " + formatoMonedaChileno(PTV + DCTO)}</Text>
             </View>)
         }
         else {
@@ -342,7 +348,7 @@ const DetallePedido = ({ navigation, route, props }) => {
 
     const SeleccionaProductoModificar = (item) => {
         //Solo puede modificar si no hay dcto general aplicado
-        if (PrecioTotalDcto === 0) {
+        if (VentaRedux.Dcto === 0) {
             let producto = { ...item }
             setProductoModificar(producto)
             //setCantidadProductoModificar(producto.Cantidad.toString())
@@ -352,18 +358,20 @@ const DetallePedido = ({ navigation, route, props }) => {
     }
 
     const ModificarProducto = () => {
-        let carro = [...pedido]
+        let carro = cloneDeep(ProductosRedux)
         let tmpProductoModificar = { ...productoModificar }
+        dispatch(updatePreciounitario({ _id: tmpProductoModificar._id, PrecioVenta: precioProductoModificar }))
         let totalTemp = 0
         for (const key in carro) {
             if (carro[key]._id === tmpProductoModificar._id) {
-                //carro[key].Cantidad = cantidadProductoModificar
-                carro[key].Precio = precioProductoModificar
+
+                carro[key].PrecioVenta = precioProductoModificar
+                console.log("carro[key]", carro[key])
             }
-            totalTemp += carro[key].Cantidad * carro[key].Precio
+            totalTemp += carro[key].Cantidad * (carro[key].PrecioVenta > 0 ? carro[key].PrecioVenta: carro[key].Precio)
         }
-        setPrecioTotal(totalTemp)
-        setPedido(carro)
+        //setPrecioTotal(totalTemp)
+        dispatch(setPrecioTotalVenta(totalTemp))
         setModalProductoVisible(false)
         setHabilitaDescuento(true)
     }
@@ -371,7 +379,7 @@ const DetallePedido = ({ navigation, route, props }) => {
     const ValidaDescuento = () => {
         return (valorDcto.trim() === "" && porcentajeDcto.trim() === "") ||
             parseInt(porcentajeDcto, 10) >= 100 ||
-            valorDcto >= PrecioTotal ||
+            valorDcto >= VentaRedux.PrecioTotalVenta ||
             isNaN(valorDcto) ||
             isNaN(porcentajeDcto)
     }
@@ -426,6 +434,18 @@ const DetallePedido = ({ navigation, route, props }) => {
                 </Pressable></>)
         }
     }
+
+    const AnadirQuitarDcto = () => {
+        if (VentaRedux.Dcto > 0) {
+            let _ptv = cloneDeep(parseInt(VentaRedux.PrecioTotalVenta))
+            let _dcto = cloneDeep(parseInt(VentaRedux.Dcto))
+            dispatch(setDcto(0))
+            dispatch(setPrecioTotalVenta(_ptv + _dcto))
+        } else {
+            setModalDescuentosVisible(true)
+        }
+    }
+
 
     {
         if (cargandoVenta || !fontsLoaded) {
@@ -528,7 +548,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                 placeholder="Observaciones"
                                 multiline
                                 leftIcon={{ type: 'font-awesome', name: 'dollar' }}
-                                onChangeText={text => setObs(text)}
+                                onChangeText={text => dispatch(setObservacion(text))}
                                 autoFocus={true}
                                 style={{
                                     fontFamily: "PromptExtraLight",
@@ -538,7 +558,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                     textAlign: "left",
                                     textAlignVertical: "top"
                                 }}
-                                value={obs}
+                                value={VentaRedux.Observacion}
                             />
                             <ModalFooter>
                                 <Pressable
@@ -553,23 +573,27 @@ const DetallePedido = ({ navigation, route, props }) => {
                         <View style={{ flex: 3 }}>
                             <ScrollView>
                                 {
-                                    pedido.map((item, index) => {
-                                        return (
-                                            <Pressable disabled={vistaVenta} key={item._id} style={styles.ViewItem} onPress={() => SeleccionaProductoModificar(item)}>
-
-                                                <View style={{ flex: 1 }}>
-                                                    <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
-                                                </View>
-
-                                                <View style={{ flex: 2 }}>
-                                                    <Text style={styles.TextNombre}>{item.Nombre}</Text>
-                                                    <Text style={styles.TextPrecioUnitario}>{"$ " + formatoMonedaChileno(item.Precio)}</Text>
-                                                </View>
-                                                <View style={{ flex: 1, alignItems: "flex-end" }}>
-                                                    <Text style={styles.TextPrecioSubtotal}>{formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
-                                                </View>
-                                            </Pressable>
-                                        )
+                                    //pedido.map((item, index) => {
+                                    ProductosRedux?.map((item, index) => {
+                                        if (item.Cantidad > 0) {
+                                            console.log("item.Precio", item.Nombre, item.Precio)
+                                            console.log("item.PrecioVenta", item.Nombre, item.PrecioVenta)
+                                            console.log("-----------------")
+                                            return (
+                                                <Pressable disabled={vistaVenta} key={item._id} style={styles.ViewItem} onPress={() => SeleccionaProductoModificar(item)}>
+                                                    <View style={{ flex: 1 }}>
+                                                        <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
+                                                    </View>
+                                                    <View style={{ flex: 2 }}>
+                                                        <Text style={styles.TextNombre}>{item.Nombre}</Text>
+                                                        <Text style={styles.TextPrecioUnitario}>{`$ ${(item.PrecioVenta > 0 ? item.PrecioVenta : item.Precio)}`}</Text>
+                                                    </View>
+                                                    <View style={{ flex: 1, alignItems: "flex-end" }}>
+                                                        <Text style={styles.TextPrecioSubtotal}>{item.PrecioVenta > 0 ? formatoMonedaChileno(item.PrecioVenta * item.Cantidad) : formatoMonedaChileno(item.Precio * item.Cantidad)}</Text>
+                                                    </View>
+                                                </Pressable>
+                                            )
+                                        }
                                     })
                                 }
                             </ScrollView>
@@ -583,7 +607,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                             <View style={{ flexDirection: "row" }}>
                                 <Text style={styles.TextPrecioTotal}>TOTAL:</Text>
 
-                                <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(PrecioTotalDcto === 0 ? PrecioTotal : PrecioTotalDcto)}</Text>
+                                <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(VentaRedux.PrecioTotalVenta)}</Text>
                             </View>
                             {/* Si es solo vista no se muestra dar descuento y añadir observacion */}
                             {vistaVenta ?
@@ -594,9 +618,9 @@ const DetallePedido = ({ navigation, route, props }) => {
                                 <>
                                     <View style={{ flexDirection: "row" }}>
                                         <TouchableOpacity
-                                            onPress={() => PrecioTotalDcto > 0 ? setPrecioTotalDcto(0) : setModalDescuentosVisible(true)}
+                                            onPress={() => AnadirQuitarDcto()}
                                             disabled={habilitaDescuento}>
-                                            <Text style={styles.TextDcto}>{PrecioTotalDcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
+                                            <Text style={styles.TextDcto}>{VentaRedux.Dcto === 0 ? "Dar Descuento" : "Quitar Descuento"}</Text>
                                         </TouchableOpacity>
 
                                     </View>
@@ -614,9 +638,9 @@ const DetallePedido = ({ navigation, route, props }) => {
                             <ButtonGroup
                                 disabled={vistaVenta}
                                 buttons={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
-                                selectedIndex={selectedIndex}
+                                selectedIndex={VentaRedux.MedioPago}
                                 onPress={(value) => {
-                                    setSelectedIndex(value);
+                                    dispatch(setMedioPago(value));
                                 }}
                                 containerStyle={{
                                     marginBottom: 20,
@@ -628,7 +652,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                 selectedButtonStyle={{
                                     backgroundColor: "#00a8a8"
                                 }}
-                                
+
                             />
                         </View>
 
@@ -636,7 +660,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                         <View style={{ flex: 1 }}>
                             <DropDownPicker
                                 open={openDd}
-                                value={valueDd}
+                                value={VentaRedux.Cliente_id}
                                 items={filteredClientesDd}
                                 disabled={vistaVenta}
                                 schema={{
@@ -645,7 +669,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                                     direccion: 'direccion'
                                 }}
                                 setOpen={setOpenDd}
-                                setValue={setValueDd}
+                                setValue={e => dispatch(setCliente_id(e.name))}
                                 setItems={setFilteredClientesDd}
                                 searchable={true}
                                 searchPlaceholder="Nombre o Direccion"

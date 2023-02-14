@@ -8,7 +8,8 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Input } from "@rneui/themed";
 import cloneDeep from 'lodash.clonedeep';
 import { useDispatch, useSelector } from 'react-redux';
-import { setProductos } from "../Features/Venta/ProductoVentaSlice";
+import { setProductos, addItem, removeItem, resetCantidad, updateCantidad } from "../Features/Venta/ProductoVentaSlice";
+import { setDcto } from "../Features/Venta/VentaSlice";
 
 const RealizarPedido = ({ navigation, route }) => {
 
@@ -166,11 +167,11 @@ const RealizarPedido = ({ navigation, route }) => {
 
     useEffect(() => {
         if (route.params && route.params.Retorno) {
-            console.log(route)
+            //console.log(route)
             Limpiar()
         }
         if (route.params && route.params.EditarPedido) {
-            console.log("🚀 ~ file: Venta.js:168 ~ useEffect ~ route.params.EditarPedido", route.params.EditarPedido)
+            //console.log("🚀 ~ file: Venta.js:168 ~ useEffect ~ route.params.EditarPedido", route.params.EditarPedido)
             cargaProductos(route.params.EditarPedido.Productos)
         }
     }, [route.params])
@@ -188,18 +189,16 @@ const RealizarPedido = ({ navigation, route }) => {
                 timeout: 5000
             };
             var url = REACT_APP_SV + '/api/producto/'
-            console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
+            //console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
                     json.forEach(element => {
-                        element.Cantidad = 0
+                        element.Cantidad = 0,
+                        element.PrecioVenta = 0
                     });
                     console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
                     dispatch(setProductos(json))
-                    //setProducts(json)
-
-
                     setLoading(false)
                 })
 
@@ -226,78 +225,51 @@ const RealizarPedido = ({ navigation, route }) => {
     }
 
     const agregarQuitarItem = (item, agregar) => {
-        let itemProducto = item
-        let ArrayProductos = products
+        let itemProducto = cloneDeep(item)
 
-        //CONTADOR DE ITEMS
         if (agregar) {
             setContItem(contItem + 1)
             let totalTemp = total
             totalTemp += itemProducto.Precio
-            ArrayProductos.forEach(element => {
-                if (element._id === itemProducto._id) {
-                    element.Cantidad += 1
-                }
-            })
-            dispatch(setProductos(ArrayProductos))
-            //setProducts(ArrayProductos)
-            //
             setTotal(totalTemp)
+            dispatch(addItem(itemProducto))
         } else {
             setContItem(contItem - 1)
             let totalTemp = total
             totalTemp -= itemProducto.Precio
-            ArrayProductos.forEach(element => {
-                if (element._id === itemProducto._id) {
-                    element.Cantidad -= 1
-                }
-            })
-            dispatch(setProductos(ArrayProductos))
-            //setProducts(ArrayProductos)
-            //
             setTotal(totalTemp)
+            dispatch(removeItem(itemProducto))
         }
     }
 
     const Siguiente = () => {
-        let tmpProducts = cloneDeep(products)
-        navigation.navigate('DetalleVenta', { pedido: tmpProducts })
+        navigation.navigate('DetalleVenta')
     }
 
     const Limpiar = () => {
-        /* let ArrayProductos = products
-        ArrayProductos.forEach(element => {
-            element.Cantidad = 0
-        })
-        dispatch(setProductos(ArrayProductos))
-        //setProducts(ArrayProductos)
-        //
+        dispatch(resetCantidad())
+        dispatch(setDcto(0))
         setTotal(0)
         setContItem(0)
-        console.log("Limpia") */
-        console.log("ProductosRedux", ProductosRedux)
+        console.log("Limpia")
     }
 
     const ModificaCantidad = () => {
-        let producto = { ...itemProducto }
-        let productos = [...products]
-        let tmpCantidad = cloneDeep(cantidad)
-        let diferenciaCantidad = tmpCantidad - producto.Cantidad
+        let producto = cloneDeep(itemProducto)
+        let NuevaCantidad = cloneDeep(cantidad)
+        let diferenciaCantidad = NuevaCantidad - producto.Cantidad
         let totalTemp = cloneDeep(total)
-        console.log("🚀 ~ file: Venta.js ~ line 248 ~ ModificaCantidad ~ totalTemp", totalTemp)
         totalTemp += producto.Precio * (diferenciaCantidad)
 
-        productos.forEach(element => {
+        /* productos.forEach(element => {
             if (element._id === producto._id) {
-                element.Cantidad = tmpCantidad
+                element.Cantidad = NuevaCantidad
             }
-        });
+        }); */
 
         setContItem(contItem + diferenciaCantidad)
         setTotal(totalTemp)
-        dispatch(setProductos(productos))
-        //setProducts(productos)
-        //
+        dispatch(updateCantidad({ _id: producto._id, Cantidad: NuevaCantidad }))
         setCantidad("")
         setModalVisible(false)
     }

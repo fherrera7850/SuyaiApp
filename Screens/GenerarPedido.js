@@ -8,8 +8,17 @@ import CheckBox from 'expo-checkbox'
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import moment from 'moment'
 import Loader from '../Components/Loader'
+import { useSelector, useDispatch } from 'react-redux'
+import { setDireccion, setFechaEntrega, setTelefono, setNota, resetP } from '../Features/Venta/PedidoSlice'
+import { resetV } from '../Features/Venta/VentaSlice'
+import cloneDeep from 'lodash.clonedeep'
 
 const GenerarPedido = ({ route, navigation }) => {
+
+    const dispatch = useDispatch();
+    const PedidoRedux = useSelector(state => state.Pedido)
+    const VentaRedux = useSelector(state => state.Venta)
+    const ProductosRedux = useSelector(state => state.productos)
 
     const [fontsLoaded] = useFonts({
         PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
@@ -20,22 +29,17 @@ const GenerarPedido = ({ route, navigation }) => {
         PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
     })
 
-    const [cliente, setCliente] = useState({})
+    const [objCliente, setObjCliente] = useState({})
     const [usarDireccion, setUsarDireccion] = useState(false)
     const [usarTelefono, setUsarTelefono] = useState(false)
     const [usarHoy, setUsarHoy] = useState(false)
     const [usarManana, setUsarManana] = useState(false)
-    const [nuevoPedido, SetNuevoPedido] = useState(route.params?.NuevoPedido)
-    const [nota, setNota] = useState("")
 
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false)
-    const [fechaEntrega, setFechaEntrega] = useState("")
     const [fechaEntregaDate, setFechaEntregaDate] = useState(null)
 
-    const [telefono, setTelefono] = useState("")
-    const [direccion, setDireccion] = useState(route.params?.direccion)
-
     const [cargando, setCargando] = useState(false)
+    const [cargandoDatos, setCargandoDatos] = useState(false)
 
     const getCliente = async () => {
         const ROCliente = {
@@ -44,34 +48,46 @@ const GenerarPedido = ({ route, navigation }) => {
             timeout: 10000
         };
 
-        await fetchWithTimeout(`${REACT_APP_SV}/api/cliente/${nuevoPedido.Cliente_id}`, ROCliente)
+        await fetchWithTimeout(`${REACT_APP_SV}/api/cliente/${VentaRedux.Cliente_id}`, ROCliente)
             .then(response => response.json())
             .then(json => {
-                setCliente(json[0])
+
+                setObjCliente(json[0])
+
                 if (json[0].direccion) {
+                    console.log("tiene direccion", json[0].direccion)
                     setUsarDireccion(true)
-                    setDireccion(json[0].direccion)
+                    dispatch(setDireccion((json[0].direccion)))
                 }
+
                 if (json[0].telefono) {
                     setUsarTelefono(true)
-                    setTelefono(json[0].telefono)
+                    dispatch(setTelefono(json[0].telefono))
                 }
             })
             .catch(err => {
                 Alert.alert("Error: ", "No se han podido cargar los clientes");
             })
+            .finally(() => {
+            })
     }
 
     useEffect(() => {
-        if (nuevoPedido.Cliente_id) {
+        if (VentaRedux.Cliente_id) {
+            setCargandoDatos(true)
             getCliente()
+            setCargandoDatos(false)
         }
     }, [])
 
     useEffect(() => {
-        setDireccion(route.params?.direccion)
+        if (route.params?.direccionMapa) {
+            setCargandoDatos(true)
+            dispatch(setDireccion(route.params?.direccionMapa))
+            setCargandoDatos(false)
+        }
 
-    }, [route.params?.direccion])
+    }, [route.params?.direccionMapa])
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
@@ -82,55 +98,58 @@ const GenerarPedido = ({ route, navigation }) => {
     };
 
     const handleConfirm = (date) => {
-        //console.warn("A date has been picked: ", date);
-        setFechaEntrega(formatDateString(date, true))
-        setFechaEntregaDate(date)
+        
+        dispatch(setFechaEntrega(formatDateString(moment(date).format("YYYY-MM-DD"), true)))
+        setFechaEntregaDate(moment(date).format("yyyy-MM-DD"))
+
         setUsarHoy(false)
         setUsarManana(false)
         hideDatePicker();
     };
 
     const ChangeDireccion = () => {
-        let ClienteTieneDireccion = Boolean(cliente?.direccion)
+        let ClienteTieneDireccion = Boolean(objCliente.direccion)
         let CheckDireccion = !usarDireccion
 
         if (ClienteTieneDireccion === true && CheckDireccion === true) {
-            setDireccion(cliente.direccion)
+            dispatch(setDireccion(objCliente.direccion))
         }
 
         if (ClienteTieneDireccion === true && CheckDireccion === false) {
-            setDireccion("")
+            dispatch(setDireccion(""))
         }
 
         if (ClienteTieneDireccion === false && CheckDireccion === false) {
-            setDireccion(direccion)
+            dispatch(setDireccion(objCliente.direccion))
         }
 
         if (ClienteTieneDireccion === false && CheckDireccion === true) {
-            setDireccion("")
+            dispatch(setDireccion(""))
         }
 
         setUsarDireccion(CheckDireccion)
     }
 
     const ChangeTelefono = () => {
-        let ClienteTieneTelefono = Boolean(cliente?.telefono)
+        let ClienteTieneTelefono = Boolean(objCliente.telefono)
+        console.log("🚀 ~ file: GenerarPedido.js:121 ~ ChangeTelefono ~ ClienteTieneTelefono", ClienteTieneTelefono)
         let CheckTelefono = !usarTelefono
+        console.log("🚀 ~ file: GenerarPedido.js:123 ~ ChangeTelefono ~ CheckTelefono", CheckTelefono)
 
         if (ClienteTieneTelefono === true && CheckTelefono === true) {
-            setTelefono(cliente.telefono)
+            dispatch(setTelefono(objCliente.telefono))
         }
 
         if (ClienteTieneTelefono === true && CheckTelefono === false) {
-            setTelefono("")
+            dispatch(setTelefono(""))
         }
 
         if (ClienteTieneTelefono === false && CheckTelefono === false) {
-            setTelefono(telefono)
+            dispatch(setTelefono(objCliente.telefono))
         }
 
         if (ClienteTieneTelefono === false && CheckTelefono === true) {
-            setTelefono("")
+            dispatch(setTelefono(""))
         }
 
         setUsarTelefono(CheckTelefono)
@@ -142,11 +161,11 @@ const GenerarPedido = ({ route, navigation }) => {
         if (CheckUsarHoy) {
             setUsarManana(false)
             let FechaHoy = moment(horaCliente(new Date())).format("YYYYMMDD")
-            setFechaEntrega(formatDateString(moment(FechaHoy).format("YYYY-MM-DD"), true))
+            dispatch(setFechaEntrega(formatDateString(moment(FechaHoy).format("YYYY-MM-DD"), true)))
             setFechaEntregaDate(moment(horaCliente(new Date())).format("yyyy-MM-DD"))
         }
         else {
-            setFechaEntrega("")
+            dispatch(setFechaEntrega(""))
         }
 
         setUsarHoy(CheckUsarHoy)
@@ -158,11 +177,11 @@ const GenerarPedido = ({ route, navigation }) => {
         if (CheckUsarManana) {
             setUsarHoy(false)
             let FechaManana = moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("YYYYMMDD")
-            setFechaEntrega(formatDateString(moment(FechaManana).format("YYYY-MM-DD"), true))
+            dispatch(setFechaEntrega(formatDateString(moment(FechaManana).format("YYYY-MM-DD"), true)))
             setFechaEntregaDate(moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("yyyy-MM-DD"))
         }
         else {
-            setFechaEntrega("")
+            dispatch(setFechaEntrega(""))
         }
 
         setUsarManana(CheckUsarManana)
@@ -176,53 +195,61 @@ const GenerarPedido = ({ route, navigation }) => {
 
     const IngresarPedido = async () => {
         //Venta ProductosVenta Pedido
-        if (!fechaEntregaDate){
+        if (!PedidoRedux.FechaEntrega) {
             Alert.alert("Error", "Indique Fecha de Entrega del pedido")
             return
         }
-            
+
         setCargando(true)
-        let dcto = 0
-        if (nuevoPedido.PorcentajeDcto !== "") {
-            dcto = (nuevoPedido.PrecioTotalVenta / (1 - (parseInt(nuevoPedido.PorcentajeDcto) / 100))) - nuevoPedido.PrecioTotalVenta
+
+        let objProductosFiltrados = cloneDeep(ProductosRedux)
+        objProductosFiltrados = objProductosFiltrados.filter((x) => {
+            return x.Cantidad > 0;
+        });
+        console.log("🚀 ~ file: GenerarPedido.js:205 ~ IngresarPedido ~ objProductosFiltrados", objProductosFiltrados)
+
+        let FechaActual = getUTCDate()
+
+        let objVenta = {
+            MedioPago: VentaRedux.MedioPago,
+            PrecioTotalVenta: VentaRedux.PrecioTotalVenta,
+            Cliente_id: VentaRedux.Cliente_id,
+            Fecha: FechaActual,
+            Dcto: VentaRedux.Dcto > 0 ? VentaRedux.Dcto : null,
+            Observacion: VentaRedux.Observacion ? VentaRedux.Observacion.trim() : null
         }
-        else if (nuevoPedido.ValorDcto !== "") {
-            dcto = parseInt(nuevoPedido.ValorDcto)
+        console.log("🚀 ~ file: GenerarPedido.js:218 ~ IngresarPedido ~ objVenta", objVenta)
+
+        let objPedido = {
+            Direccion: PedidoRedux.Direccion ? PedidoRedux.Direccion : null,
+            Telefono: PedidoRedux.Telefono ? PedidoRedux.Telefono : null,
+            FechaEntrega: fechaEntregaDate,
+            Nota: PedidoRedux.Nota?.trim() === "" ? null : PedidoRedux.Nota?.trim(),
+            FechaCreacion: FechaActual,
+            Estado: "I"
         }
+        console.log("🚀 ~ file: GenerarPedido.js:228 ~ IngresarPedido ~ objPedido", objPedido)
 
         const ROVenta = {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             timeout: 10000,
             body: JSON.stringify({
-                Venta: {
-                    MedioPago: nuevoPedido.MedioPago,
-                    PrecioTotalVenta: nuevoPedido.PrecioTotalVenta,
-                    Cliente_id: nuevoPedido.Cliente_id,
-                    Fecha: getUTCDate(),
-                    Dcto: dcto > 0 ? dcto : null,
-                    Observacion: nuevoPedido.Observacion.trim() === "" ? null : nuevoPedido.Observacion.trim()
-                },
-                ProductosVenta: nuevoPedido.Productos,
-                Pedido: {
-                    Direccion: direccion === undefined ? null : direccion,
-                    Telefono: telefono.trim() === "" ? null : telefono.trim(),
-                    FechaEntrega: fechaEntregaDate,
-                    Nota: nota.trim() === "" ? null : nota.trim(),
-                    FechaCreacion: getUTCDate(),
-                    Estado: "I"
-                }
+                Venta: objVenta,
+                ProductosVenta: objProductosFiltrados,
+                Pedido: objPedido
             })
         };
 
         await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
             .then(response => {
                 if (response.status === 200) {
-                    setCargando(false)
-                    navigation.navigate("VentaOk", { MontoVenta: nuevoPedido.PrecioTotalVenta })
+                    let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
+                    dispatch(resetV())
+                    dispatch(resetP())
+                    navigation.navigate("VentaOk", { MontoVenta: ptv })
                 }
                 else {
-                    setCargando(false)
                     throw new Error("Error")
                 }
             })
@@ -245,9 +272,12 @@ const GenerarPedido = ({ route, navigation }) => {
                     ]
                 )
             })
+            .finally(() => {
+                setCargando(false)
+            })
     }
 
-    if (!fontsLoaded) return null
+    if (!fontsLoaded || cargandoDatos) return Loader("Cargando Datos...")
     if (cargando) return Loader("Ingresando Pedido...")
     return (
         <View style={styles.viewPrincipal}>
@@ -258,7 +288,7 @@ const GenerarPedido = ({ route, navigation }) => {
                     <TextInput style={styles.textInputFieldsFirst}
                         placeholder="Dirección"
                         onFocus={() => navigation.navigate("SelectorDireccionCliente", { Retorno: "GenerarPedido" })}
-                        value={direccion ? direccion : ""}
+                        value={PedidoRedux.Direccion}
                         selection={{ start: 0, end: 0 }}
                         editable={!usarDireccion} />
 
@@ -268,7 +298,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         value={usarDireccion}
                         onValueChange={() => ChangeDireccion()}
                         style={styles.checkbox}
-                        disabled={!cliente?.direccion}
+                        disabled={!objCliente.direccion}
                     />
                     <Text style={styles.label}>Usar direccion cliente</Text>
                 </View>
@@ -276,8 +306,8 @@ const GenerarPedido = ({ route, navigation }) => {
                     <Icon style={styles.inputIcon} name="phone" size={20} color="#000" />
                     <TextInput style={styles.textInputFieldsTelefono}
                         placeholder="Teléfono"
-                        value={telefono ? telefono : ""}
-                        onChangeText={(text) => setTelefono(text)}
+                        value={PedidoRedux.Telefono ? PedidoRedux.Telefono : ""}
+                        onChangeText={(text) => dispatch(setTelefono(text))}
                         editable={!usarTelefono}
                         keyboardType={"phone-pad"} />
 
@@ -287,7 +317,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         value={usarTelefono}
                         onValueChange={() => ChangeTelefono()}
                         style={styles.checkbox}
-                        disabled={!cliente?.telefono}
+                        disabled={!objCliente.telefono}
                     />
                     <Text style={styles.label}>Usar teléfono cliente</Text>
 
@@ -297,7 +327,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         <Icon style={styles.inputIcon} name="calendar" size={20} color="#000" />
                         <TextInput style={styles.textInputFieldsFirst}
                             placeholder="Fecha de Entrega"
-                            value={fechaEntrega}
+                            value={PedidoRedux.FechaEntrega}
                             //onChangeText={(text) => setFechaEntrega(text)}
                             editable={false}
                         />
@@ -329,8 +359,8 @@ const GenerarPedido = ({ route, navigation }) => {
                 <Icon style={styles.inputIcon} name="commenting-o" size={20} color="#000" />
                 <TextInput style={styles.textInputFields}
                     placeholder="Nota"
-                    value={nota}
-                    onChangeText={(text) => setNota(text)}
+                    value={PedidoRedux.Nota}
+                    onChangeText={(text) => dispatch(setNota(text))}
                     multiline
                 />
             </View>

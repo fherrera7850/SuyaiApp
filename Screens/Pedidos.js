@@ -1,5 +1,5 @@
 import React, { useState, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Pressable, Linking } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Alert, Linking } from 'react-native';
 import { Agenda, LocaleConfig } from 'react-native-calendars';
 import { Avatar, Card, Button } from 'react-native-paper';
 import { fetchWithTimeout, FormatoWhatsapp } from '../Components/util';
@@ -172,7 +172,6 @@ const Pedidos = ({ navigation }) => {
       navigation.navigate("DetalleVenta", { VentaPedido: pedidoSeleccionado.Venta_id })
   }
 
-
   if (!fontsLoaded) return null
   return (
     <View style={styles.container}>
@@ -210,18 +209,19 @@ const Pedidos = ({ navigation }) => {
 
           </View> : <></>}
 
-          <View style={{marginBottom:15}}>
+          <View style={{ marginBottom: 15 }}>
             <View style={{ flexDirection: "row" }}>
               <Icon style={styles.inputIcon} name="shopping-bag" size={20} color="#000" />
               <Text style={styles.textInputFields}>Productos</Text>
             </View>
 
             {
-              pedidoSeleccionado.Pedido.map((itemPedido, index) => {
-                return <View style={{marginLeft:25}} key={index}>
+              pedidoSeleccionado ? pedidoSeleccionado?.Pedido?.map((itemPedido, index) => {
+                return <View style={{ marginLeft: 25 }} key={index}>
                   <Text style={styles.textDetalleProductosModal}>{`${itemPedido.Cantidad} x ${itemPedido.Producto}`}</Text>
                 </View>
-              })
+              }) : <></>
+
             }
           </View>
 
