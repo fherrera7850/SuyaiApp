@@ -11,8 +11,8 @@ import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import { useIsFocused } from '@react-navigation/native';
 import moment from 'moment';
 import { useDispatch, useSelector } from 'react-redux';
-import { setMedioPago, setCliente_id, setDcto, setObservacion, resetV, setPrecioTotalVenta } from "../Features/Venta/VentaSlice";
-import { updatePreciounitario } from '../Features/Venta/ProductoVentaSlice';
+import { setMedioPago, setCliente_id, setDcto, setObservacion, resetV, setPrecioTotalVenta, setModoVenta } from "../Features/Venta/VentaSlice";
+import { updatePreciounitario, resetCantidad, updateCantidad } from '../Features/Venta/ProductoVentaSlice';
 import { resetP } from '../Features/Venta/PedidoSlice';
 import cloneDeep from 'lodash.clonedeep';
 
@@ -22,6 +22,8 @@ const DetallePedido = ({ navigation, route, props }) => {
     const dispatch = useDispatch();
     const ProductosRedux = useSelector((state) => state.productos);
     const VentaRedux = useSelector((state) => state.Venta);
+    const [IdVenta, setIdVenta] = useState(null)
+    const [IdPedido, setIdPedido] = useState(null)
 
     const [modalDescuentosVisible, setModalDescuentosVisible] = useState(false)
     const [modalProductoVisible, setModalProductoVisible] = useState(false)
@@ -36,6 +38,7 @@ const DetallePedido = ({ navigation, route, props }) => {
     const [vistaVenta, setVistaVenta] = useState(false)
     const [vistaPedido, setVistaPedido] = useState(false)
     const [gananciaVenta, setGananciaVenta] = useState(0)
+    const [fechaVenta, setFechaVenta] = useState()
 
     const isFocused = useIsFocused();
 
@@ -58,8 +61,22 @@ const DetallePedido = ({ navigation, route, props }) => {
         PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
     })
 
-    //FUNCIONES
 
+    //ID VENTA EN LA CABECERA
+    useEffect(() => {
+        if (vistaVenta) {
+            navigation.setOptions({
+                headerTitle: `Detalle Venta N°${IdVenta}`
+            })
+        }
+
+        if (vistaPedido)
+            navigation.setOptions({
+                headerTitle: `Detalle Pedido N°${IdPedido}`
+            })
+    }, [navigation, IdVenta, IdPedido])
+
+    //FUNCIONES
     useEffect(() => {
 
         //OPERACIONES
@@ -84,6 +101,7 @@ const DetallePedido = ({ navigation, route, props }) => {
         }
 
         if (route.params?.VentaHistorial) {
+            dispatch(resetCantidad())
             console.log("🚀 ~ file: DetalleVenta.js:23 ~ DetallePedido ~ route.params.VentaHistorial", route.params.VentaHistorial)
             cargaVentaPorId(route.params.VentaHistorial)
             setVistaVenta(true)
@@ -96,17 +114,11 @@ const DetallePedido = ({ navigation, route, props }) => {
 
     }, [props, isFocused])
 
-    //ID VENTA EN LA CABECERA
-    /* useEffect(() => {
-        if (vistaVenta)
-            navigation.setOptions({
-                headerTitle: `Detalle Venta N°${pedido[0]?._idv}`
-            })
-        if (vistaPedido)
-            navigation.setOptions({
-                headerTitle: `Detalle Pedido N°${pedido[0]?._idp}`
-            })
-    }, [navigation, pedido]) */
+
+
+
+
+
 
     const CargaClientes = async () => {
         setLoadingClientes(true)
@@ -143,17 +155,63 @@ const DetallePedido = ({ navigation, route, props }) => {
             .then(json => {
                 dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta))
                 dispatch(setMedioPago(json[0].MedioPago))
-                if (json[0].Dcto) {
-                    dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta - json[0].Dcto))
-                }
+                dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta))
+                dispatch(setDcto(json[0].Dcto))
+                dispatch(setObservacion(json[0].Observacion))
                 dispatch(setCliente_id(json[0].Cliente_id))
+                dispatch(setModoVenta("Viendo"))
+                setIdVenta(json[0]._idv)
+                console.log("json[0]._idp", json[0]._idp)
+                if (json[0]._idp)
+                    setIdPedido(json[0]._idp)
+                setFechaVenta(json[0].Fecha)
+                /* "_id": 108,
+                "_idv": 42,
+                "_idp": null,
+                "PrecioTotalVenta": 1000,
+                "Dcto": 0,
+                "MedioPago": 0,
+                "Cliente_id": null,
+                "Nombre": "Tartaleta",
+                "Cantidad": 1,
+                "Precio": 1000,
+                "Costo": 200,
+                "Fecha": "2023-02-17T12:05:39" */
+
+                /*  "_id": 10,
+                 "Nombre": "PROMO Bebida+Completo",
+                 "Precio": 2000,
+                 "Costo": 900,
+                 "Descripcion": null,
+                 "Negocio_id": 1,
+                 "CategoriaProducto_id": 1,
+                 "Imagen": null,
+                 "Ventas": 1 */
+
                 let costo = 0
+                //let ProductosFormateados = []
                 json.forEach(e => {
                     costo += e.Costo * e.Cantidad
+                    /* ProductosFormateados.push({
+                        _id: e._idproducto, //falta id_producto
+                        Nombre: e.Nombre,
+                        Precio: e.Precio,
+                        PrecioVenta: e.PrecioVenta, //falta campo
+                        Costo: e.Costo,
+                        Cantidad: e.Cantidad,
+                        Descripcion: e.Descripcion, //falta
+                        CategoriaProducto_id: e.CategoriaProducto_id, //falta
+                        Imagen: e.Imagen, //falta
+                        Ventas: e.Ventas //falta
+                    }) */
+                    dispatch(updateCantidad({ _id: e.id_producto, Cantidad: e.Cantidad }))
                 });
+                //console.log("🚀 ~ file: DetalleVenta.js:202 ~ cargaVentaPorId ~ ProductosFormateados", ProductosFormateados)
                 setGananciaVenta(json[0].PrecioTotalVenta - costo)
-            })
+                //dispatch(setProductos(ProductosFormateados))
 
+
+            })
             .catch(err => {
                 Alert.alert("Error: ", "No se ha podido cargar la venta");
             })
@@ -196,7 +254,7 @@ const DetallePedido = ({ navigation, route, props }) => {
             body: JSON.stringify(objCompleto)
         };
 
-        console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
+        //console.log("🚀 ~ file: DetalleVenta.js ~ line 115 ~ IngresaVenta ~ ROVenta", ROVenta)
 
         /* if (vistaPedido) {
             url = REACT_APP_SV + '/api/pedidoVenta/CompletaPedidoVenta'
@@ -269,7 +327,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                             timeout: 10000
                         };
 
-                        let url = REACT_APP_SV + `/api/venta/${pedido[0]?._idv}`
+                        let url = REACT_APP_SV + `/api/venta/${IdVenta}`
                         await fetchWithTimeout(url, RODelete)
                             .then(response => {
                                 if (response.status === 200) {
@@ -366,9 +424,9 @@ const DetallePedido = ({ navigation, route, props }) => {
             if (carro[key]._id === tmpProductoModificar._id) {
 
                 carro[key].PrecioVenta = precioProductoModificar
-                console.log("carro[key]", carro[key])
+                //console.log("carro[key]", carro[key])
             }
-            totalTemp += carro[key].Cantidad * (carro[key].PrecioVenta > 0 ? carro[key].PrecioVenta: carro[key].Precio)
+            totalTemp += carro[key].Cantidad * (carro[key].PrecioVenta > 0 ? carro[key].PrecioVenta : carro[key].Precio)
         }
         //setPrecioTotal(totalTemp)
         dispatch(setPrecioTotalVenta(totalTemp))
@@ -390,6 +448,11 @@ const DetallePedido = ({ navigation, route, props }) => {
             isNaN(precioProductoModificar)
     }
 
+    const ModificaProductosPedido = () => {
+        /* dispatch(setModoVenta("Editando"))
+        navigation.navigate("Venta") */
+    }
+
     const Botones = () => {
         if (vistaVenta) {
             return (<Pressable style={styles.BotonEliminar} onPress={() => EliminaVenta()} >
@@ -406,7 +469,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                     <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
                 </View>
             </Pressable>
-                <Pressable disabled style={[styles.BotonModificarProductos, styles.disabled]} onPress={() => ModificaProductosPedido()} >
+                <Pressable style={[styles.BotonModificarProductos]} onPress={() => ModificaProductosPedido()} >
                     <View style={{ flexDirection: "row" }}>
                         <Text style={styles.TextoFinalizar}>Modificar Productos</Text>
                         <Icon name='shopping-cart' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
@@ -576,11 +639,8 @@ const DetallePedido = ({ navigation, route, props }) => {
                                     //pedido.map((item, index) => {
                                     ProductosRedux?.map((item, index) => {
                                         if (item.Cantidad > 0) {
-                                            console.log("item.Precio", item.Nombre, item.Precio)
-                                            console.log("item.PrecioVenta", item.Nombre, item.PrecioVenta)
-                                            console.log("-----------------")
                                             return (
-                                                <Pressable disabled={vistaVenta} key={item._id} style={styles.ViewItem} onPress={() => SeleccionaProductoModificar(item)}>
+                                                <Pressable disabled={vistaVenta} key={index} style={styles.ViewItem} onPress={() => SeleccionaProductoModificar(item)}>
                                                     <View style={{ flex: 1 }}>
                                                         <Text style={styles.TextCantidad}>{item.Cantidad + " x "}</Text>
                                                     </View>
@@ -612,7 +672,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                             {/* Si es solo vista no se muestra dar descuento y añadir observacion */}
                             {vistaVenta ?
                                 <>
-                                    <Text style={styles.TextPrecioUnitario}>Fecha: {moment(pedido[0]?.Fecha).format("DD-MM-yyyy HH:mm")}</Text>
+                                    <Text style={styles.TextPrecioUnitario}>Fecha: {moment(fechaVenta).format("DD-MM-yyyy HH:mm")}</Text>
                                     <Text style={styles.TextPrecioUnitario}>Ganancia Venta: ${formatoMonedaChileno(gananciaVenta)}</Text>
                                 </> :
                                 <>

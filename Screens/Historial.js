@@ -13,7 +13,6 @@ const Historial = ({ props, navigation }) => {
     const isFocused = useIsFocused();
     const [Ventas, SetVentas] = useState([])
     const [loading, setLoading] = useState(true)
-    const [modalVisible, setModalVisible] = useState(false)
     const [fontsLoaded] = useFonts({
         PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
         PromptExtraLight: require("./../assets/fonts/Prompt-ExtraLight.ttf"),
@@ -30,12 +29,6 @@ const Historial = ({ props, navigation }) => {
             headers: { 'Content-Type': 'application/json' },
             timeout: 5000
         };
-
-        /* let date = new Date().toUTCString();
-        console.log("UTC Now Date: " + date); // UTC Date: Thu, 27 Jun 2019 07:50:46 GMT
-
-        let localDate = moment(date).local(true).format("YYYY-MM-DD HH:mm:ss");
-        console.log("Moment Local Date: " + localDate); // Moment Local Date: 2019-06-27 13:20:46 */
 
         cargaVentas(REACT_APP_SV + '/api/venta/Historial', RO)
         console.log("RECARGA HISTORIAL")
@@ -56,7 +49,7 @@ const Historial = ({ props, navigation }) => {
                 .then(json => {
                     if (!json.ErrorMessage) {
                         SetVentas(json)
-                        console.log("🚀 ~ file: Historial.js:64 ~ cargaVentas ~ json", json)
+                        //console.log("🚀 ~ file: Historial.js:64 ~ cargaVentas ~ json", json)
                     }else{
                         SetVentas([])
                     }

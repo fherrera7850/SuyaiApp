@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useis } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Pressable, Alert, Modal, TextInput } from "react-native";
 import { formatoMonedaChileno, fetchWithTimeout } from "../Components/util";
 import Loader from "../Components/Loader";
@@ -9,9 +9,10 @@ import { Input } from "@rneui/themed";
 import cloneDeep from 'lodash.clonedeep';
 import { useDispatch, useSelector } from 'react-redux';
 import { setProductos, addItem, removeItem, resetCantidad, updateCantidad } from "../Features/Venta/ProductoVentaSlice";
-import { setDcto } from "../Features/Venta/VentaSlice";
+import { setDcto, resetV } from "../Features/Venta/VentaSlice";
+import { useIsFocused } from '@react-navigation/native';
 
-const RealizarPedido = ({ navigation, route }) => {
+const RealizarPedido = ({ navigation, route, props }) => {
 
     const styles = StyleSheet.create({
         centeredView: {
@@ -146,15 +147,17 @@ const RealizarPedido = ({ navigation, route }) => {
         }
     });
 
+    const isFocused = useIsFocused();
     const dispatch = useDispatch();
     const ProductosRedux = useSelector((state) => state.productos);
+    const VentaRedux = useSelector((state) => state.Venta);
 
-    //const [products, setProducts] = useState([])
     const [contItem, setContItem] = useState(0)
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(false)
     const [cantidad, setCantidad] = useState("")
     const [itemProducto, setItemProducto] = useState({})
+
     const [modalVisible, setModalVisible] = useState(false)
     const [fontsLoaded] = useFonts({
         PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
@@ -164,6 +167,7 @@ const RealizarPedido = ({ navigation, route }) => {
         PromptMedium: require("./../assets/fonts/Prompt-Medium.ttf"),
         PromptSemiBold: require("./../assets/fonts/Prompt-SemiBold.ttf"),
     })
+
 
     useEffect(() => {
         if (route.params && route.params.Retorno) {
@@ -180,6 +184,29 @@ const RealizarPedido = ({ navigation, route }) => {
         cargaProductos()
     }, [])
 
+    useEffect(() => {
+        if (VentaRedux?.ModoVenta === "Viendo") {
+            console.log("-------------VIENE DE VER UN PEDIDO EN HISTORIAL, SE RESETEA VENTA Y PRODUCTOS------------")
+            dispatch(resetV())
+            Limpiar()
+        }
+
+        if (VentaRedux?.ModoVenta === "EditandoPedido") {
+            console.log("EditandoPedido")
+            let tt = 0
+            let cont = 0;
+            ProductosRedux.forEach(element => {
+                console.log("🚀 ~ file: Venta.js:199 ~ useEffect ~ element", element)
+                tt +=  parseInt(element.Cantidad) *  parseInt(element.Precio)
+                //cont += parseInt(element.Cantidad)
+            });
+            setTotal(tt)
+            //setContItem(cont)
+        }
+            
+
+    }, [props, isFocused])
+
     async function cargaProductos(id_pedido = null) {
         try {
             setLoading(true)
@@ -195,7 +222,7 @@ const RealizarPedido = ({ navigation, route }) => {
                 .then(json => {
                     json.forEach(element => {
                         element.Cantidad = 0,
-                        element.PrecioVenta = 0
+                            element.PrecioVenta = 0
                     });
                     console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
                     dispatch(setProductos(json))

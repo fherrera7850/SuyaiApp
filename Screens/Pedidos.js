@@ -10,6 +10,8 @@ import { useFonts } from 'expo-font'
 import { useIsFocused } from "@react-navigation/native";
 import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import Icon from 'react-native-vector-icons/FontAwesome'
+import { useDispatch } from 'react-redux';
+import { setModoVenta } from '../Features/Venta/VentaSlice';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -22,6 +24,7 @@ LocaleConfig.defaultLocale = 'es';
 
 const Pedidos = ({ navigation }) => {
 
+  const dispatch = useDispatch();
   const isFocused = useIsFocused();
   const [pedidos, setPedidos] = useState([])
   const [cargando, setCargando] = useState(false)
@@ -168,8 +171,11 @@ const Pedidos = ({ navigation }) => {
     setModalVisible(false)
     if (pedidoSeleccionado.Estado === "C")
       navigation.navigate("DetalleVenta", { VentaHistorial: pedidoSeleccionado.Venta_id })
-    if (pedidoSeleccionado.Estado === "I")
-      navigation.navigate("DetalleVenta", { VentaPedido: pedidoSeleccionado.Venta_id })
+    if (pedidoSeleccionado.Estado === "I"){
+      dispatch(setModoVenta("EditandoPedido"))
+      navigation.navigate("Venta")
+    }
+    
   }
 
   if (!fontsLoaded) return null

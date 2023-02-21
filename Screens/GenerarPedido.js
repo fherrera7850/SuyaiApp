@@ -215,7 +215,7 @@ const GenerarPedido = ({ route, navigation }) => {
             PrecioTotalVenta: VentaRedux.PrecioTotalVenta,
             Cliente_id: VentaRedux.Cliente_id,
             Fecha: FechaActual,
-            Dcto: VentaRedux.Dcto > 0 ? VentaRedux.Dcto : null,
+            Dcto: VentaRedux.Dcto,
             Observacion: VentaRedux.Observacion ? VentaRedux.Observacion.trim() : null
         }
         console.log("🚀 ~ file: GenerarPedido.js:218 ~ IngresarPedido ~ objVenta", objVenta)

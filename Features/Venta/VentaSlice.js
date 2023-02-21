@@ -6,7 +6,8 @@ let initialState = {
     Cliente_id: null,
     Dcto: 0,
     Observacion: null,
-    PrecioTotalVenta : 0
+    PrecioTotalVenta : 0,
+    ModoVenta: "Editando" //Editando - Viendo
 }
 
 const VentaSlice = createSlice({
@@ -28,9 +29,12 @@ const VentaSlice = createSlice({
         setPrecioTotalVenta: (state, action) => {
             state.PrecioTotalVenta = action.payload
         },
+        setModoVenta: (state, action) => {
+            state.ModoVenta = action.payload
+        },
         resetV: () => initialState
     }
 });
 
-export const { setMedioPago, setCliente_id, setDcto, setObservacion, setPrecioTotalVenta, resetV } = VentaSlice.actions;
+export const { setMedioPago, setCliente_id, setDcto, setObservacion, setPrecioTotalVenta, resetV, setModoVenta } = VentaSlice.actions;
 export default VentaSlice.reducer
