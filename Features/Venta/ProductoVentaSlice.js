@@ -35,7 +35,6 @@ const ProductoVentaSlice = createSlice({
       const { _id, Cantidad } = action.payload;
 
       const founditem = state.find((item) => item._id === _id);
-      console.log("🚀 ~ file: ProductoVentaSlice.js:38 ~ founditem", founditem)
       
       if (founditem) {
         founditem.Cantidad = Cantidad;

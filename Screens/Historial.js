@@ -7,9 +7,12 @@ import { REACT_APP_SV } from "@env"
 import moment from "moment";
 import { useFonts } from 'expo-font'
 import Icon from 'react-native-vector-icons/FontAwesome'
+import { useDispatch } from "react-redux";
+import { setModoVenta } from "../Features/Venta/VentaSlice";
 
 const Historial = ({ props, navigation }) => {
 
+    const dispatch = useDispatch()
     const isFocused = useIsFocused();
     const [Ventas, SetVentas] = useState([])
     const [loading, setLoading] = useState(true)
@@ -50,7 +53,7 @@ const Historial = ({ props, navigation }) => {
                     if (!json.ErrorMessage) {
                         SetVentas(json)
                         //console.log("🚀 ~ file: Historial.js:64 ~ cargaVentas ~ json", json)
-                    }else{
+                    } else {
                         SetVentas([])
                     }
                     setLoading(false)
@@ -140,7 +143,7 @@ const Historial = ({ props, navigation }) => {
                                         return (
                                             <View key={index2}>
                                                 <View>
-                                                    <TouchableOpacity style={styles.itemContainer} onPress={() => navigation.navigate("DetalleVenta", { VentaHistorial: item2._id })}>
+                                                    <TouchableOpacity style={styles.itemContainer} onPress={() => { navigation.navigate("DetalleVenta", { VentaHistorial: item2._id }); dispatch(setModoVenta("Viendo")) }}>
                                                         <View style={{ flex: 2 }}>
 
                                                             <View style={{ flexDirection: "row", marginBottom: 7 }}>
@@ -148,6 +151,7 @@ const Historial = ({ props, navigation }) => {
                                                                 {IconoMedioPago()}
                                                                 <Text style={styles.textCantItems}>{"(" + item2.CantidadItems + " items)"}</Text>
                                                             </View>
+
 
 
                                                             {item2.Cliente ?

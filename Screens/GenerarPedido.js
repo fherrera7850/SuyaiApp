@@ -73,7 +73,7 @@ const GenerarPedido = ({ route, navigation }) => {
     }
 
     useEffect(() => {
-        if (VentaRedux.Cliente_id) {
+        if (VentaRedux.Cliente_id && VentaRedux.ModoVenta === "Editando") {
             setCargandoDatos(true)
             getCliente()
             setCargandoDatos(false)
@@ -293,7 +293,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         editable={!usarDireccion} />
 
                 </View>
-                <View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
+                {VentaRedux.ModoVenta === "Editando"?<View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
                     <CheckBox
                         value={usarDireccion}
                         onValueChange={() => ChangeDireccion()}
@@ -301,7 +301,8 @@ const GenerarPedido = ({ route, navigation }) => {
                         disabled={!objCliente.direccion}
                     />
                     <Text style={styles.label}>Usar direccion cliente</Text>
-                </View>
+                </View>:<View style={{ flexDirection: "row", height:30 }}></View>}
+                
                 <View style={{ flexDirection: "row" }}>
                     <Icon style={styles.inputIcon} name="phone" size={20} color="#000" />
                     <TextInput style={styles.textInputFieldsTelefono}
@@ -312,7 +313,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         keyboardType={"phone-pad"} />
 
                 </View>
-                <View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
+                {VentaRedux.ModoVenta === "Editando"?<View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
                     <CheckBox
                         value={usarTelefono}
                         onValueChange={() => ChangeTelefono()}
@@ -321,7 +322,8 @@ const GenerarPedido = ({ route, navigation }) => {
                     />
                     <Text style={styles.label}>Usar teléfono cliente</Text>
 
-                </View>
+                </View>:<View style={{ flexDirection: "row", height:30 }}></View>}
+                
                 <View>
                     <Pressable style={{ flexDirection: "row" }} onPress={showDatePicker}>
                         <Icon style={styles.inputIcon} name="calendar" size={20} color="#000" />

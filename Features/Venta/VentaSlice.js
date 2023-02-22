@@ -7,7 +7,7 @@ let initialState = {
     Dcto: 0,
     Observacion: null,
     PrecioTotalVenta : 0,
-    ModoVenta: "Editando" //Editando - Viendo
+    ModoVenta: "Editando" //Editando - Viendo - EditandoPedido
 }
 
 const VentaSlice = createSlice({

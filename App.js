@@ -130,6 +130,7 @@ export default function App() {
           <Stack.Screen name="SelectorDireccionCliente" component={SelectorDireccionClienteScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Seleccione Dirección", }} />
           <Stack.Screen name="Puntos" component={PuntosScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Puntos", }} />
           <Stack.Screen name="GenerarPedido" component={GenerarPedidoScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Completar Pedido", }} />
+          <Stack.Screen name="ModificaProductos" component={VentaScreen} options={{ headerTitleStyle: { fontFamily: "PromptSemiBold" }, headerTitle: "Productos", }} />
         </Stack.Navigator>
       </NavigationContainer>
     </Provider>

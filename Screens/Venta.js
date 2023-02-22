@@ -11,6 +11,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setProductos, addItem, removeItem, resetCantidad, updateCantidad } from "../Features/Venta/ProductoVentaSlice";
 import { setDcto, resetV } from "../Features/Venta/VentaSlice";
 import { useIsFocused } from '@react-navigation/native';
+import CarritoProductos from "../Components/CarritoProductos";
 
 const RealizarPedido = ({ navigation, route, props }) => {
 
@@ -196,14 +197,14 @@ const RealizarPedido = ({ navigation, route, props }) => {
             let tt = 0
             let cont = 0;
             ProductosRedux.forEach(element => {
-                console.log("🚀 ~ file: Venta.js:199 ~ useEffect ~ element", element)
-                tt +=  parseInt(element.Cantidad) *  parseInt(element.Precio)
-                //cont += parseInt(element.Cantidad)
+                tt += element.Cantidad * element.Precio
+                cont += parseInt(element.Cantidad)
             });
+            //console.log("tt", tt)
+            setContItem(cont)
             setTotal(tt)
-            //setContItem(cont)
         }
-            
+
 
     }, [props, isFocused])
 
@@ -216,7 +217,7 @@ const RealizarPedido = ({ navigation, route, props }) => {
                 timeout: 5000
             };
             var url = REACT_APP_SV + '/api/producto/'
-            //console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
+            console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
@@ -368,7 +369,7 @@ const RealizarPedido = ({ navigation, route, props }) => {
 
                     </Modal>
                     <View style={{ flex: 5 }}>
-                        <ScrollView>
+                        {/* <ScrollView>
                             {
                                 ProductosRedux?.map((item, index) => {
                                     return (
@@ -412,7 +413,12 @@ const RealizarPedido = ({ navigation, route, props }) => {
                                     )
                                 })
                             }
-                        </ScrollView>
+                        </ScrollView> */}
+                        <CarritoProductos
+                            agregarQuitarItem={agregarQuitarItem}
+                            setModalVisible={setModalVisible}
+                            setItemProducto={setItemProducto}
+                        />
                     </View>
                     <View style={{ flex: 1 }}>
                         {contItem > 1 ?

@@ -12,6 +12,8 @@ import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux';
 import { setModoVenta } from '../Features/Venta/VentaSlice';
+import { updateCantidad, updatePreciounitario } from '../Features/Venta/ProductoVentaSlice';
+import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota } from '../Features/Venta/PedidoSlice';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -64,46 +66,6 @@ const Pedidos = ({ navigation }) => {
           var keyName = moment(json[i].FechaEntrega).format("YYYY-MM-DD")
           ArrayFinal[keyName] = ArrayPedidosDelDia
         }
-
-        /* let objEjemplo = {
-          '2023-01-16':
-            [{
-              Nombre: 'Daniela Pezoa',
-              Direccion: "Alcantara 2661, Las Condes",
-              Etiqueta: "Las Condes",
-              Observacion: "Entregar en conserjería",
-              Pedido:
-                [{
-                  Cantidad: 3,
-                  Producto: "Recarga 20lt"
-                },
-                {
-                  Cantidad: 1,
-                  Producto: "Despacho"
-                },
-                {
-                  Cantidad: 1,
-                  Producto: "Disp. USB"
-                }]
-
-            },
-            {
-              Nombre: 'Gustavo Ramirez',
-              Direccion: "Dana Ruiz Laplagne 3492, San Bernardo",
-              Etiqueta: "San Bernardo",
-              Observacion: "Casa",
-              Pedido:
-                [{
-                  Cantidad: 5,
-                  Producto: "Recarga 20lt"
-                },
-                {
-                  Cantidad: 1,
-                  Producto: "Despacho"
-                }]
-
-            }]
-        } */
 
         setPedidos(ArrayFinal)
       })
@@ -169,13 +131,28 @@ const Pedidos = ({ navigation }) => {
 
   const ContinuarPedido = () => {
     setModalVisible(false)
+
     if (pedidoSeleccionado.Estado === "C")
       navigation.navigate("DetalleVenta", { VentaHistorial: pedidoSeleccionado.Venta_id })
-    if (pedidoSeleccionado.Estado === "I"){
+
+    if (pedidoSeleccionado.Estado === "I") {
+
       dispatch(setModoVenta("EditandoPedido"))
-      navigation.navigate("Venta")
+
+      dispatch(setVenta_Id(pedidoSeleccionado.Venta_id))
+      dispatch(setDireccion(pedidoSeleccionado.Direccion))
+      dispatch(setTelefono(pedidoSeleccionado.Telefono))
+      dispatch(setFechaEntrega(pedidoSeleccionado.FechaEntrega))
+      dispatch(setNota(pedidoSeleccionado.Nota))
+
+      pedidoSeleccionado.Pedido.forEach(element => {
+        dispatch(updateCantidad({ _id: element.Producto_id, Cantidad: element.Cantidad }))
+        dispatch(updatePreciounitario({ _id: element.Producto_id, PrecioVenta: element.PrecioVenta }))
+      })
+
+      navigation.navigate("ModificaProductos")
     }
-    
+
   }
 
   if (!fontsLoaded) return null
