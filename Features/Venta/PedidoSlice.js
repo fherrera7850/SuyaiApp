@@ -5,6 +5,7 @@ const initialState = {
     Direccion: null, 
     Telefono: null, 
     FechaEntrega: null, 
+    FechaEntregaDate: null,
     Nota: null, 
     Estado: null, 
     Venta_id: null, 
@@ -29,9 +30,12 @@ const PedidoSlice = createSlice({
         setVenta_Id: (state, action) => {
             state.Venta_id = action.payload
         },
-        resetP : () => initialState
+        resetP : () => initialState,
+        setFechaEntregaDate: (state, action) => {
+            state.FechaEntregaDate = action.payload
+        }
     }
 });
 
-export const { setDireccion, setTelefono, setFechaEntrega, setNota, resetP, setVenta_Id } = PedidoSlice.actions;
+export const { setDireccion, setTelefono, setFechaEntrega, setNota, resetP, setVenta_Id, setFechaEntregaDate } = PedidoSlice.actions;
 export default PedidoSlice.reducer

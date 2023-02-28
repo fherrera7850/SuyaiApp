@@ -9,7 +9,7 @@ import DateTimePickerModal from "react-native-modal-datetime-picker";
 import moment from 'moment'
 import Loader from '../Components/Loader'
 import { useSelector, useDispatch } from 'react-redux'
-import { setDireccion, setFechaEntrega, setTelefono, setNota, resetP } from '../Features/Venta/PedidoSlice'
+import { setDireccion, setFechaEntrega, setTelefono, setNota, resetP, setFechaEntregaDate } from '../Features/Venta/PedidoSlice'
 import { resetV } from '../Features/Venta/VentaSlice'
 import cloneDeep from 'lodash.clonedeep'
 
@@ -36,7 +36,6 @@ const GenerarPedido = ({ route, navigation }) => {
     const [usarManana, setUsarManana] = useState(false)
 
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false)
-    const [fechaEntregaDate, setFechaEntregaDate] = useState(null)
 
     const [cargando, setCargando] = useState(false)
     const [cargandoDatos, setCargandoDatos] = useState(false)
@@ -98,9 +97,10 @@ const GenerarPedido = ({ route, navigation }) => {
     };
 
     const handleConfirm = (date) => {
-        
+
         dispatch(setFechaEntrega(formatDateString(moment(date).format("YYYY-MM-DD"), true)))
-        setFechaEntregaDate(moment(date).format("yyyy-MM-DD"))
+        //setFechaEntregaDate(moment(date).format("yyyy-MM-DD"))
+        dispatch(setFechaEntregaDate(moment(date).format("yyyy-MM-DD")))
 
         setUsarHoy(false)
         setUsarManana(false)
@@ -162,7 +162,7 @@ const GenerarPedido = ({ route, navigation }) => {
             setUsarManana(false)
             let FechaHoy = moment(horaCliente(new Date())).format("YYYYMMDD")
             dispatch(setFechaEntrega(formatDateString(moment(FechaHoy).format("YYYY-MM-DD"), true)))
-            setFechaEntregaDate(moment(horaCliente(new Date())).format("yyyy-MM-DD"))
+            dispatch(setFechaEntregaDate(moment(horaCliente(new Date())).format("yyyy-MM-DD")))
         }
         else {
             dispatch(setFechaEntrega(""))
@@ -178,7 +178,7 @@ const GenerarPedido = ({ route, navigation }) => {
             setUsarHoy(false)
             let FechaManana = moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("YYYYMMDD")
             dispatch(setFechaEntrega(formatDateString(moment(FechaManana).format("YYYY-MM-DD"), true)))
-            setFechaEntregaDate(moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("yyyy-MM-DD"))
+            dispatch(setFechaEntregaDate(moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("yyyy-MM-DD")))
         }
         else {
             dispatch(setFechaEntrega(""))
@@ -223,10 +223,11 @@ const GenerarPedido = ({ route, navigation }) => {
         let objPedido = {
             Direccion: PedidoRedux.Direccion ? PedidoRedux.Direccion : null,
             Telefono: PedidoRedux.Telefono ? PedidoRedux.Telefono : null,
-            FechaEntrega: fechaEntregaDate,
+            FechaEntrega: PedidoRedux.FechaEntregaDate,
             Nota: PedidoRedux.Nota?.trim() === "" ? null : PedidoRedux.Nota?.trim(),
             FechaCreacion: FechaActual,
-            Estado: "I"
+            Estado: "I",
+            Venta_id: PedidoRedux.Venta_id
         }
         console.log("🚀 ~ file: GenerarPedido.js:228 ~ IngresarPedido ~ objPedido", objPedido)
 
@@ -241,13 +242,17 @@ const GenerarPedido = ({ route, navigation }) => {
             })
         };
 
-        await fetchWithTimeout(REACT_APP_SV + '/api/venta/', ROVenta)
+        let url = REACT_APP_SV + '/api/venta/'
+        if (VentaRedux.ModoVenta === "EditandoPedido")
+            url = REACT_APP_SV + '/api/pedido/CompletarPedido'
+        await fetchWithTimeout(url, ROVenta)
             .then(response => {
                 if (response.status === 200) {
-                    let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
+                    /* let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
                     dispatch(resetV())
                     dispatch(resetP())
-                    navigation.navigate("VentaOk", { MontoVenta: ptv })
+                    navigation.navigate("VentaOk", { MontoVenta: ptv }) */
+                    console.log("SUCCESSSSSSSSSSSSS")
                 }
                 else {
                     throw new Error("Error")
@@ -293,7 +298,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         editable={!usarDireccion} />
 
                 </View>
-                {VentaRedux.ModoVenta === "Editando"?<View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
+                {VentaRedux.ModoVenta === "Editando" ? <View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
                     <CheckBox
                         value={usarDireccion}
                         onValueChange={() => ChangeDireccion()}
@@ -301,8 +306,8 @@ const GenerarPedido = ({ route, navigation }) => {
                         disabled={!objCliente.direccion}
                     />
                     <Text style={styles.label}>Usar direccion cliente</Text>
-                </View>:<View style={{ flexDirection: "row", height:30 }}></View>}
-                
+                </View> : <View style={{ flexDirection: "row", height: 30 }}></View>}
+
                 <View style={{ flexDirection: "row" }}>
                     <Icon style={styles.inputIcon} name="phone" size={20} color="#000" />
                     <TextInput style={styles.textInputFieldsTelefono}
@@ -313,7 +318,7 @@ const GenerarPedido = ({ route, navigation }) => {
                         keyboardType={"phone-pad"} />
 
                 </View>
-                {VentaRedux.ModoVenta === "Editando"?<View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
+                {VentaRedux.ModoVenta === "Editando" ? <View style={{ flexDirection: "row", marginLeft: 35, marginBottom: 25 }}>
                     <CheckBox
                         value={usarTelefono}
                         onValueChange={() => ChangeTelefono()}
@@ -322,8 +327,8 @@ const GenerarPedido = ({ route, navigation }) => {
                     />
                     <Text style={styles.label}>Usar teléfono cliente</Text>
 
-                </View>:<View style={{ flexDirection: "row", height:30 }}></View>}
-                
+                </View> : <View style={{ flexDirection: "row", height: 30 }}></View>}
+
                 <View>
                     <Pressable style={{ flexDirection: "row" }} onPress={showDatePicker}>
                         <Icon style={styles.inputIcon} name="calendar" size={20} color="#000" />
@@ -367,11 +372,17 @@ const GenerarPedido = ({ route, navigation }) => {
                 />
             </View>
 
-            <View style={styles.viewButtonGuardar}>
+            {VentaRedux.ModoVenta === "Editando" ? <View style={styles.viewButtonGuardar}>
                 <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido()}>
                     <Text style={styles.textButtonGuardar}>Ingresar Pedido</Text>
                 </TouchableOpacity>
-            </View>
+            </View> : <></>}
+
+            {VentaRedux.ModoVenta === "EditandoPedido" ? <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido()}>
+
+                <Text style={styles.textButtonGuardar}>Completar Pedido</Text>
+            </TouchableOpacity> : <></>}
+
 
         </View>
 

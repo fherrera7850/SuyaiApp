@@ -2,7 +2,7 @@ import React, { useState, useLayoutEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Alert, Linking } from 'react-native';
 import { Agenda, LocaleConfig } from 'react-native-calendars';
 import { Avatar, Card, Button } from 'react-native-paper';
-import { fetchWithTimeout, FormatoWhatsapp } from '../Components/util';
+import { fetchWithTimeout, formatDateString, FormatoWhatsapp } from '../Components/util';
 import { REACT_APP_SV } from "@env"
 import moment from 'moment';
 import * as Clipboard from 'expo-clipboard';
@@ -13,7 +13,7 @@ import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux';
 import { setModoVenta } from '../Features/Venta/VentaSlice';
 import { updateCantidad, updatePreciounitario } from '../Features/Venta/ProductoVentaSlice';
-import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota } from '../Features/Venta/PedidoSlice';
+import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota, setFechaEntregaDate } from '../Features/Venta/PedidoSlice';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -142,8 +142,10 @@ const Pedidos = ({ navigation }) => {
       dispatch(setVenta_Id(pedidoSeleccionado.Venta_id))
       dispatch(setDireccion(pedidoSeleccionado.Direccion))
       dispatch(setTelefono(pedidoSeleccionado.Telefono))
-      dispatch(setFechaEntrega(pedidoSeleccionado.FechaEntrega))
+      dispatch(setFechaEntrega(formatDateString(moment(pedidoSeleccionado.FechaEntrega).format("YYYY-MM-DD"), true)))
+      dispatch(setFechaEntregaDate(moment(pedidoSeleccionado.FechaEntrega).format("yyyy-MM-DD")))
       dispatch(setNota(pedidoSeleccionado.Nota))
+
 
       pedidoSeleccionado.Pedido.forEach(element => {
         dispatch(updateCantidad({ _id: element.Producto_id, Cantidad: element.Cantidad }))

@@ -404,7 +404,7 @@ const DetallePedido = ({ navigation, route, props }) => {
     const ModificarProducto = () => {
         let carro = cloneDeep(ProductosRedux)
         let tmpProductoModificar = { ...productoModificar }
-        dispatch(updatePreciounitario({ _id: tmpProductoModificar._id, PrecioVenta: precioProductoModificar }))
+        dispatch(updatePreciounitario({ _id: tmpProductoModificar._id, PrecioVenta: parseInt(precioProductoModificar) }))
         let totalTemp = 0
         for (const key in carro) {
             if (carro[key]._id === tmpProductoModificar._id) {
