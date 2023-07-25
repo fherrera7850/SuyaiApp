@@ -1,5 +1,5 @@
-import React, { useEffect, useState, useis } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image, Pressable, Alert, Modal, TextInput } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, BackHandler, Pressable, Alert, Modal } from "react-native";
 import { formatoMonedaChileno, fetchWithTimeout } from "../Components/util";
 import Loader from "../Components/Loader";
 import { REACT_APP_SV } from "@env"
@@ -8,10 +8,12 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import { Input } from "@rneui/themed";
 import cloneDeep from 'lodash.clonedeep';
 import { useDispatch, useSelector } from 'react-redux';
-import { setProductos, addItem, removeItem, resetCantidad, updateCantidad } from "../Features/Venta/ProductoVentaSlice";
-import { setDcto, resetV } from "../Features/Venta/VentaSlice";
+import { setProductos, addItem, removeItem, resetCantidad, updateCantidad, resetPV } from "../Features/Venta/ProductoVentaSlice";
+import { setDcto, resetV, setPrecioTotalVenta } from "../Features/Venta/VentaSlice";
+import { resetP } from "../Features/Venta/PedidoSlice";
 import { useIsFocused } from '@react-navigation/native';
 import CarritoProductos from "../Components/CarritoProductos";
+import { Ionicons } from "@expo/vector-icons";
 
 const RealizarPedido = ({ navigation, route, props }) => {
 
@@ -170,10 +172,13 @@ const RealizarPedido = ({ navigation, route, props }) => {
     })
 
 
+
+
     useEffect(() => {
         if (route.params && route.params.Retorno) {
             //console.log(route)
             Limpiar()
+            //cargaProductos()
         }
         if (route.params && route.params.EditarPedido) {
             //console.log("🚀 ~ file: Venta.js:168 ~ useEffect ~ route.params.EditarPedido", route.params.EditarPedido)
@@ -192,7 +197,7 @@ const RealizarPedido = ({ navigation, route, props }) => {
             Limpiar()
         }
 
-        if (VentaRedux?.ModoVenta === "EditandoPedido") {
+        if (VentaRedux?.ModoVenta === "EditandoPedido") { //selecciona un pedido y hace click en editar
             console.log("EditandoPedido")
             let tt = 0
             let cont = 0;
@@ -208,6 +213,33 @@ const RealizarPedido = ({ navigation, route, props }) => {
 
     }, [props, isFocused])
 
+    useEffect(() => {
+        if (VentaRedux?.ModoVenta === "EditandoPedido")
+            navigation.setOptions({
+                headerLeft: () => {
+                    return (
+                        <TouchableOpacity onPress={() => {
+                            dispatch(resetV())
+                            dispatch(resetCantidad())
+                            dispatch(resetP())
+                            dispatch(setPrecioTotalVenta(0))
+                            navigation.goBack(null)
+                        }}>
+                            <View style={{ marginRight: 12 }}>
+                                <Ionicons name="arrow-back" size={30} />
+                            </View>
+
+                        </TouchableOpacity>
+                    )
+                },
+                headerTitle: `Productos del pedido`,
+            })
+    }, [navigation])
+
+
+
+
+
     async function cargaProductos(id_pedido = null) {
         try {
             setLoading(true)
@@ -221,12 +253,14 @@ const RealizarPedido = ({ navigation, route, props }) => {
             await fetchWithTimeout(url, RO)
                 .then(response => response.json())
                 .then(json => {
-                    json.forEach(element => {
-                        element.Cantidad = 0,
-                            element.PrecioVenta = 0
-                    });
-                    console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
-                    dispatch(setProductos(json))
+                    if (VentaRedux?.ModoVenta !== "EditandoPedido") {
+                        json.forEach(element => {
+                            element.Cantidad = 0,
+                                element.PrecioVenta = 0
+                        });
+                        console.log("USE EFFECT QUE SE EJECUTA 1 VEZ PARA DEJAR LOS PRODUCTOS EN 0")
+                        dispatch(setProductos(json))
+                    }
                     setLoading(false)
                 })
 
@@ -430,9 +464,11 @@ const RealizarPedido = ({ navigation, route, props }) => {
                                 <Text style={styles.TextoBotonSgte}>{contItem + " Item ($ " + formatoMonedaChileno(total) + ")"}</Text>
                             </Pressable>
                         }
-                        <Pressable style={styles.BotonLimpiar} onPress={() => Limpiar()} >
-                            <Text style={styles.TextoBotonSgte}>Limpiar</Text>
-                        </Pressable>
+                        {VentaRedux?.ModoVenta !== "EditandoPedido" ? //se produce error al limpiar, por eso
+                            <Pressable style={styles.BotonLimpiar} onPress={() => Limpiar()} >
+                                <Text style={styles.TextoBotonSgte}>Limpiar</Text>
+                            </Pressable> : <></>}
+
                     </View>
 
                 </View>

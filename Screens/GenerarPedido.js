@@ -12,8 +12,9 @@ import { useSelector, useDispatch } from 'react-redux'
 import { setDireccion, setFechaEntrega, setTelefono, setNota, resetP, setFechaEntregaDate } from '../Features/Venta/PedidoSlice'
 import { resetV } from '../Features/Venta/VentaSlice'
 import cloneDeep from 'lodash.clonedeep'
+import { useIsFocused } from '@react-navigation/native';
 
-const GenerarPedido = ({ route, navigation }) => {
+const GenerarPedido = ({ route, navigation, props }) => {
 
     const dispatch = useDispatch();
     const PedidoRedux = useSelector(state => state.Pedido)
@@ -39,6 +40,9 @@ const GenerarPedido = ({ route, navigation }) => {
 
     const [cargando, setCargando] = useState(false)
     const [cargandoDatos, setCargandoDatos] = useState(false)
+
+
+    const isFocused = useIsFocused();
 
     const getCliente = async () => {
         const ROCliente = {
@@ -87,6 +91,11 @@ const GenerarPedido = ({ route, navigation }) => {
         }
 
     }, [route.params?.direccionMapa])
+
+    useEffect(() => {
+        console.log("#######################", VentaRedux.MedioPago, "#######################")
+    }, [isFocused, props])
+
 
     const showDatePicker = () => {
         setDatePickerVisibility(true);
@@ -156,6 +165,7 @@ const GenerarPedido = ({ route, navigation }) => {
     }
 
     const ChangeUsarHoy = () => {
+        console.log("VentaRedux.MedioPago", VentaRedux.MedioPago)
         let CheckUsarHoy = !usarHoy
 
         if (CheckUsarHoy) {
@@ -244,14 +254,14 @@ const GenerarPedido = ({ route, navigation }) => {
 
         let url = REACT_APP_SV + '/api/venta/'
         if (VentaRedux.ModoVenta === "EditandoPedido")
-            url = REACT_APP_SV + '/api/pedido/CompletarPedido'
+            url = REACT_APP_SV + '/api/pedido/CompletarPedido2'
         await fetchWithTimeout(url, ROVenta)
             .then(response => {
                 if (response.status === 200) {
-                    /* let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
+                    let ptv = cloneDeep(VentaRedux.PrecioTotalVenta)
                     dispatch(resetV())
                     dispatch(resetP())
-                    navigation.navigate("VentaOk", { MontoVenta: ptv }) */
+                    navigation.navigate("VentaOk", { MontoVenta: ptv })
                     console.log("SUCCESSSSSSSSSSSSS")
                 }
                 else {

@@ -15,6 +15,7 @@ import { setMedioPago, setCliente_id, setDcto, setObservacion, resetV, setPrecio
 import { updatePreciounitario, resetCantidad, updateCantidad } from '../Features/Venta/ProductoVentaSlice';
 import { resetP } from '../Features/Venta/PedidoSlice';
 import cloneDeep from 'lodash.clonedeep';
+import { Chip } from 'react-native-paper';
 
 const DetallePedido = ({ navigation, route, props }) => {
 
@@ -121,7 +122,7 @@ const DetallePedido = ({ navigation, route, props }) => {
             setVistaPedido(true)
         }
 
-    }, [props, isFocused])
+    }, [VentaRedux.ModoVenta])
 
 
 
@@ -186,10 +187,10 @@ const DetallePedido = ({ navigation, route, props }) => {
 
                 let tt = 0
                 ProductosRedux.forEach(element => {
-                    console.log("🚀 ~ file: DetalleVenta.js:186 ~ cargaVentaPorId ~ element:", element)
+                    //console.log("🚀 ~ file: DetalleVenta.js:186 ~ cargaVentaPorId ~ element:", element)
                     tt += element.Cantidad * (element.PrecioVenta > 0 ? element.PrecioVenta : element.Precio)
                 });
-                console.log("🚀 ~ file: DetalleVenta.js:197 ~ cargaVentaPorId ~ tt:", tt)
+                //console.log("🚀 ~ file: DetalleVenta.js:197 ~ cargaVentaPorId ~ tt:", tt)
                 dispatch(setPrecioTotalVenta(tt))
 
 
@@ -447,7 +448,7 @@ const DetallePedido = ({ navigation, route, props }) => {
         }
         else if (vistaPedido) {
             return (<>
-                <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => navigation.navigate("GenerarPedido")} >
+                <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => { console.log("VentaRedux.MedioPago", VentaRedux.MedioPago); navigation.navigate("GenerarPedido") }} >
                     <View style={{ flexDirection: "row" }}>
                         <Text style={styles.TextoFinalizar}>Continuar</Text>
                         <Icon name='arrow-right' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
@@ -667,26 +668,10 @@ const DetallePedido = ({ navigation, route, props }) => {
                         </View>
 
                         {/* mediopago */}
-                        <View style={{ flex: 1 }}>
-                            <ButtonGroup
-                                disabled={vistaVenta}
-                                buttons={['EFECTIVO', 'TRANSFERENCIA', 'TARJETA']}
-                                selectedIndex={VentaRedux.MedioPago}
-                                onPress={(value) => {
-                                    dispatch(setMedioPago(value));
-                                }}
-                                containerStyle={{
-                                    marginBottom: 20,
-                                    borderColor: "#00a8a8"
-                                }}
-                                textStyle={{
-                                    fontFamily: "PromptRegular"
-                                }}
-                                selectedButtonStyle={{
-                                    backgroundColor: "#00a8a8"
-                                }}
-
-                            />
+                        <View style={{ flexDirection: "row", paddingVertical: 15 }}>
+                            <Chip icon="cash" selected={VentaRedux.MedioPago === 0} onPress={() => dispatch(setMedioPago(0))}>EFECTIVO</Chip>
+                            <Chip icon="cellphone-check" selected={VentaRedux.MedioPago === 1} onPress={() => dispatch(setMedioPago(1))}>TRANSFERENCIA</Chip>
+                            <Chip icon="credit-card" selected={VentaRedux.MedioPago === 2} onPress={() => dispatch(setMedioPago(2))}>TARJETA</Chip>
                         </View>
 
                         {/* cliente */}

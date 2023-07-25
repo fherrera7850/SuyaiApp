@@ -12,8 +12,9 @@ import ReusableModal, { ModalFooter } from '../Components/ReusableModal';
 import Icon from 'react-native-vector-icons/FontAwesome'
 import { useDispatch } from 'react-redux';
 import { setModoVenta } from '../Features/Venta/VentaSlice';
-import { updateCantidad, updatePreciounitario } from '../Features/Venta/ProductoVentaSlice';
+import { updateCantidad, updatePreciounitario, resetCantidad } from '../Features/Venta/ProductoVentaSlice';
 import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota, setFechaEntregaDate } from '../Features/Venta/PedidoSlice';
+import Loader from '../Components/Loader';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -30,6 +31,7 @@ const Pedidos = ({ navigation }) => {
   const isFocused = useIsFocused();
   const [pedidos, setPedidos] = useState([])
   const [cargando, setCargando] = useState(false)
+  const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
@@ -139,6 +141,7 @@ const Pedidos = ({ navigation }) => {
 
       dispatch(setModoVenta("EditandoPedido"))
 
+      dispatch(resetCantidad())
       dispatch(setVenta_Id(pedidoSeleccionado.Venta_id))
       dispatch(setDireccion(pedidoSeleccionado.Direccion))
       dispatch(setTelefono(pedidoSeleccionado.Telefono))
@@ -155,9 +158,45 @@ const Pedidos = ({ navigation }) => {
       navigation.navigate("ModificaProductos")
     }
 
+
+  }
+
+  const CompletarPedidoRapido = async () => {
+    let id_venta = pedidoSeleccionado.Venta_id
+
+    try {
+      setLoading(true)
+
+      var RO = {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        timeout: 10000,
+        body: JSON.stringify({ id_venta })
+      };
+
+      let url = REACT_APP_SV + '/api/pedido/CompletarPedidoRapido'
+
+      await fetchWithTimeout(url, RO)
+        .then(response => {
+          setModalVisible(false)
+          if (response.status === 200) {
+            alert("exito")
+          }
+          setLoading(false)
+        })
+
+    }
+    catch (error) {
+      setLoading(false)
+      setModalVisible(false)
+      alert("Error al completar el pedido")
+    }
+
+
   }
 
   if (!fontsLoaded) return null
+  if (loading) return Loader("Completando Pedido...")
   return (
     <View style={styles.container}>
       <ReusableModal
@@ -223,8 +262,8 @@ const Pedidos = ({ navigation }) => {
             <Button icon="tune-variant" mode="text" color='#00BBF2' onPress={() => ContinuarPedido()}>
               Editar
             </Button>
-            <Button icon="send" mode="text" color='#00BBF2' onPress={() => ContinuarPedido()}>
-              Continuar
+            <Button icon="send" mode="text" color='#00BBF2' onPress={() => CompletarPedidoRapido()}>
+              Completar
             </Button>
           </View>
 

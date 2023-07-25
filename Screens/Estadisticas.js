@@ -33,14 +33,11 @@ const Estadisticas = ({ navigation, route }) => {
     fetch(url, RO)
       .then(response => response.json())
       .then(json => {
-        //console.log("RESPUESTA ESTADISTICAS", json)
-        if (json.length > 0) {
-          console.log("🚀 ~ file: Estadisticas.js ~ line 25 ~ useEffect ~ json", json[0])
-          setEstadisticas(json[0])
+        console.log("RESPUESTA ESTADISTICAS", json)
+        
+          
+          setEstadisticas(json)
           setLoading(false)
-        } else {
-          throw new Error("Se produjo un error al obtener los datos")
-        }
       })
       .catch(err => {
         setLoading(false)
@@ -67,32 +64,32 @@ const Estadisticas = ({ navigation, route }) => {
 
         <View style={{ marginTop: 15 }}>
           <Text style={styles.TextoTitulos}>Facturacion</Text>
-          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.SumaVentas)}</Text>
+          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.Generales[0].SumaVentas)}</Text>
         </View>
 
         <View style={{ marginTop: 15 }}>
           <Text style={styles.TextoTitulos}>Ventas</Text>
-          <Text style={styles.TextoSubtitulos}>{formatoMonedaChileno(estadisticas.NroVentas)}</Text>
+          <Text style={styles.TextoSubtitulos}>{formatoMonedaChileno(estadisticas.Generales[0].NroVentas)}</Text>
         </View>
 
         <View style={{ marginTop: 15 }}>
           <Text style={styles.TextoTitulos}>Venta Promedio</Text>
-          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.PromedioVentas)}</Text>
+          <Text style={styles.TextoSubtitulos}>{!estadisticas.Generales[0].PromedioVentas?0:"$ " + formatoMonedaChileno(estadisticas.Generales[0].PromedioVentas)}</Text>
         </View>
 
         <View style={{ marginTop: 15 }}>
           <Text style={styles.TextoTitulos}>Ganancia</Text>
-          <Text style={styles.TextoSubtitulos}>{"$ " + formatoMonedaChileno(estadisticas.GananciaVentas)}</Text>
+          <Text style={styles.TextoSubtitulos}>{!estadisticas.Generales[0].GananciaVentas?0:"$ " + formatoMonedaChileno(estadisticas.Generales[0].GananciaVentas)}</Text>
         </View>
 
-        <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
+        <Pressable disabled={!estadisticas.MasVendidos[0]} style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MasVendidos: estadisticas.MasVendidos })}>
           <Text style={styles.TextoTitulos}>Productos Más Vendidos</Text>
-          <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos ? "#1 " + estadisticas?.MasVendidos[0]?.nombre : ""}</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MasVendidos[0] ? "#1 " + estadisticas?.MasVendidos[0]?.nombre : "--"}</Text>
         </Pressable>
 
-        <Pressable style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
+        <Pressable disabled={!estadisticas.MediosDePago[0]} style={{ marginTop: 15 }} onPress={() => navigation.navigate("DetalleEstadistica", { MediosDePago: estadisticas.MediosDePago })}>
           <Text style={styles.TextoTitulos}>Medios de Pago Más Utilizados</Text>
-          <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago ? "#1 " + estadisticas?.MediosDePago[0]?.mediopago : ""}</Text>
+          <Text style={styles.TextoSubtitulos}>{estadisticas.MediosDePago[0] ? "#1 " + estadisticas?.MediosDePago[0]?.mediopago : "--"}</Text>
         </Pressable>
 
       </View>
