@@ -24,7 +24,8 @@ const Cliente = ({ navigation, route }) => {
 
     const [modalVisibleClienteOK, setModalVisibleClienteOK] = useState(false)
 
-    const direccion = route.params?.direccion
+    const direccion = route.params?.direccionMapa
+    console.log("🚀 ~ file: Cliente.js:28 ~ Cliente ~ direccion:", direccion)
     let pdireccion = direccion?.split(",")
     const calle = pdireccion ? pdireccion[0] : null
     const comuna = pdireccion ? pdireccion[pdireccion.length - 2] : null

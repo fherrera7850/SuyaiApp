@@ -9,11 +9,12 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 web-build/
-.env
+ .env
 *.sql
 Environments.js
 # macOS
 .DS_Store
-app.json
+ app.json
 Todo.md
 Readme.md
+CommonErrors.md

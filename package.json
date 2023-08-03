@@ -7,7 +7,8 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "eject": "expo eject"
+    "eject": "expo eject",
+    "eas-updates": "dotenv -e .env -- eas update"
   },
   "dependencies": {
     "@expo/vector-icons": "^13.0.0",
@@ -19,6 +20,7 @@
     "@reduxjs/toolkit": "^1.9.2",
     "@rneui/base": "^4.0.0-rc.6",
     "@rneui/themed": "^4.0.0-rc.6",
+    "dotenv-cli": "^7.2.1",
     "expo": "^46.0.0",
     "expo-checkbox": "~2.2.0",
     "expo-clipboard": "~3.1.0",

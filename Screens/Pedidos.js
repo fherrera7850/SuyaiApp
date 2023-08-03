@@ -2,7 +2,7 @@ import React, { useState, useLayoutEffect } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Alert, Linking } from 'react-native';
 import { Agenda, LocaleConfig } from 'react-native-calendars';
 import { Avatar, Card, Button } from 'react-native-paper';
-import { fetchWithTimeout, formatDateString, FormatoWhatsapp } from '../Components/util';
+import { fetchWithTimeout, formatDateString, formatoMonedaChileno, FormatoWhatsapp } from '../Components/util';
 import { REACT_APP_SV } from "@env"
 import moment from 'moment';
 import * as Clipboard from 'expo-clipboard';
@@ -32,6 +32,7 @@ const Pedidos = ({ navigation }) => {
   const [pedidos, setPedidos] = useState([])
   const [cargando, setCargando] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [pedidoCompletado, setPedidoCompletado] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
@@ -101,6 +102,7 @@ const Pedidos = ({ navigation }) => {
                     </View>
                   })
                 }
+                <Text style={styles.TextDireccion}>{"$ " + formatoMonedaChileno(item.PrecioTotalVenta)}</Text>
               </View>
               <View style={{ flex: 1, justifyContent: "center", alignItems: "flex-end" }}>
                 <Avatar.Text size={40} style={{ backgroundColor: item.Estado === "C" ? "#08aa60" : "#feb859" }} label={item.Estado === "C" ? "C" : "P"} />
@@ -130,6 +132,65 @@ const Pedidos = ({ navigation }) => {
 
     Linking.openURL(phoneNumber);
   }
+
+  const EliminarPedido = async () => {
+    let id_pedido = pedidoSeleccionado.Pedido_id
+
+    try {
+      setLoading(true);
+
+      // Mostrar mensaje de confirmación al usuario
+      Alert.alert(
+        "Confirmar Eliminación",
+        "¿Estás seguro de que deseas eliminar este pedido?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel",
+            onPress: () => {
+              setLoading(false)
+            }
+          },
+          {
+            text: "Eliminar",
+            onPress: async () => {
+              var RO = {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 10000,
+                body: JSON.stringify({ id_pedido })
+              };
+
+              let url = REACT_APP_SV + '/api/pedido/EliminarPedido';
+
+              await fetchWithTimeout(url, RO)
+                .then(response => {
+                  setModalVisible(false)
+                  if (response.status === 200) {
+                    Alert.alert("Se eliminó el pedido correctamente.");
+                  } else {
+                    alert("Error al eliminar");
+                  }
+                  setLoading(false);
+                  setPedidos([])
+                  getPedidos()
+                })
+                .catch(error => {
+                  setLoading(false);
+                  setModalVisible(false);
+                  alert("Error al completar el pedido ", error);
+                });
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      setLoading(false);
+      setModalVisible(false);
+      alert("Error al completar el pedido");
+    }
+  };
 
   const ContinuarPedido = () => {
     setModalVisible(false)
@@ -165,34 +226,86 @@ const Pedidos = ({ navigation }) => {
     let id_venta = pedidoSeleccionado.Venta_id
 
     try {
-      setLoading(true)
+      setLoading(true);
 
-      var RO = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        timeout: 10000,
-        body: JSON.stringify({ id_venta })
-      };
+      // Mostrar mensaje de confirmación al usuario
+      Alert.alert(
+        "Confirmar Completar Pedido",
+        "¿Estás seguro de que deseas completar este pedido?",
+        [
+          {
+            text: "Cancelar",
+            style: "cancel"
+          },
+          {
+            text: "Completar",
+            onPress: async () => {
+              var RO = {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                timeout: 10000,
+                body: JSON.stringify({ id_venta })
+              };
 
-      let url = REACT_APP_SV + '/api/pedido/CompletarPedidoRapido'
+              let url = REACT_APP_SV + '/api/pedido/CompletarPedidoRapido';
 
-      await fetchWithTimeout(url, RO)
-        .then(response => {
-          setModalVisible(false)
-          if (response.status === 200) {
-            alert("exito")
-          }
-          setLoading(false)
-        })
-
+              await fetchWithTimeout(url, RO)
+                .then(response => {
+                  setModalVisible(false);
+                  if (response.status === 200) {
+                    Alert.alert("Se completó el pedido correctamente.");
+                  }
+                  setLoading(false);
+                  setPedidos([])
+                  getPedidos()
+                })
+                .catch(error => {
+                  setLoading(false);
+                  setModalVisible(false);
+                  alert("Error al completar el pedido");
+                });
+            },
+          },
+        ],
+        { cancelable: false }
+      );
+    } catch (error) {
+      setLoading(false);
+      setModalVisible(false);
+      alert("Error al completar el pedido");
     }
-    catch (error) {
-      setLoading(false)
-      setModalVisible(false)
-      alert("Error al completar el pedido")
+
+
+  }
+
+  const VerVentaPedido = () => {
+    setModalVisible(false)
+    navigation.navigate("DetalleVenta", { VentaHistorial: pedidoSeleccionado.Venta_id }); dispatch(setModoVenta("Viendo"))
+  }
+
+  const RenderBotonesPedido = () => {
+    if (pedidoSeleccionado.Estado === "C") {
+      return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+      <Button mode="text" color='#2792b2' onPress={() => VerVentaPedido()}>
+        Ver Venta
+      </Button>
+
+    </View>)
     }
+    else {
+      return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+        <Button mode="text" color='#ea4239' onPress={() => EliminarPedido()}>
+          Eliminar
+        </Button>
+        <Button mode="text" color='#2792b2' onPress={() => ContinuarPedido()}>
+          Editar
+        </Button>
+        <Button mode="text" color='#1e9a1a' onPress={() => CompletarPedidoRapido()}>
+          Completar
+        </Button>
 
-
+      </View>)
+    }
   }
 
   if (!fontsLoaded) return null
@@ -233,6 +346,13 @@ const Pedidos = ({ navigation }) => {
 
           </View> : <></>}
 
+          <View style={{ flexDirection: "row" }}>
+            <Icon style={styles.inputIcon} name="calendar-o" size={20} color="#000" />
+            <Text style={styles.textInputFields} >
+              {`Fecha Entrega: ${moment(pedidoSeleccionado.FechaEntrega).format("DD-MM-yyyy")}`}
+            </Text>
+          </View>
+
           <View style={{ marginBottom: 15 }}>
             <View style={{ flexDirection: "row" }}>
               <Icon style={styles.inputIcon} name="shopping-bag" size={20} color="#000" />
@@ -249,24 +369,26 @@ const Pedidos = ({ navigation }) => {
             }
           </View>
 
-
           <View style={{ flexDirection: "row" }}>
-            <Icon style={styles.inputIcon} name="calendar-o" size={20} color="#000" />
             <Text style={styles.textInputFields} >
-              {`Fecha Entrega: ${moment(pedidoSeleccionado.FechaEntrega).format("DD-MM-yyyy")}`}
+              {`Total: ${"$ " + formatoMonedaChileno(pedidoSeleccionado.PrecioTotalVenta)}`}
             </Text>
           </View>
+
         </View>
         <ModalFooter>
-          <View style={{ flexDirection: "row", alignItems: "center" }}>
-            <Button icon="tune-variant" mode="text" color='#00BBF2' onPress={() => ContinuarPedido()}>
+          {/* <View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+            <Button mode="text" color='#ea4239' onPress={() => EliminarPedido()}>
+              Eliminar
+            </Button>
+            <Button mode="text" color='#2792b2' onPress={() => ContinuarPedido()}>
               Editar
             </Button>
-            <Button icon="send" mode="text" color='#00BBF2' onPress={() => CompletarPedidoRapido()}>
+            <Button mode="text" color='#1e9a1a' onPress={() => CompletarPedidoRapido()}>
               Completar
             </Button>
-          </View>
-
+          </View> */}
+          <RenderBotonesPedido/>
         </ModalFooter>
       </ReusableModal>
       <Agenda

@@ -1,5 +1,5 @@
 import { View, StyleSheet, TouchableOpacity } from 'react-native'
-import MapView, { Marker } from 'react-native-maps'
+import MapView, { Marker, PROVIDER_GOOGLE } from 'react-native-maps';
 import React, { useRef, useState } from 'react'
 import { GooglePlacesAutocomplete } from 'react-native-google-places-autocomplete';
 import { REACT_APP_GOOGLE_API_KEY } from '@env'
@@ -30,6 +30,7 @@ const MapaAutoComplete = (props) => {
     return (
         <View style={styles.container}>
             <MapView
+                provider={PROVIDER_GOOGLE}
                 ref={mapRef}
                 style={{
                     width: "100%",

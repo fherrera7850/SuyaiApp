@@ -80,11 +80,15 @@ const DetallePedido = ({ navigation, route, props }) => {
 
     //FUNCIONES
     useEffect(() => {
+        console.log("ENTRA EN USEEFFECT MODOVENTA")
 
         //OPERACIONES
         CargaClientes()
 
-        if (VentaRedux.ModoVenta === "Editando" || VentaRedux.ModoVenta === "Viendo") {
+        //if (VentaRedux.ModoVenta === "Editando" || VentaRedux.ModoVenta === "Viendo") {
+
+        if (VentaRedux.ModoVenta === "Editando") {
+            
             let TempPedido = cloneDeep(ProductosRedux)
             TempPedido = TempPedido.filter((x) => {
                 return x.Cantidad > 0;
@@ -98,8 +102,9 @@ const DetallePedido = ({ navigation, route, props }) => {
                 }
 
             });
-            
+
             dispatch(setPrecioTotalVenta(totalTemp))
+            console.log("🚀 ~ file: DetalleVenta.js:104 ~ totalTemp:", totalTemp)
 
             if (VentaRedux.Dcto > 0) {
                 dispatch(setPrecioTotalVenta(totalTemp - VentaRedux.Dcto))
@@ -117,7 +122,7 @@ const DetallePedido = ({ navigation, route, props }) => {
             cargaVentaPorId(route.params.VentaPedido)
             setVistaPedido(true)
         } */
-        else if (VentaRedux.ModoVenta === "EditandoPedido") { //Sólo por si necesito otra condicion, sino puede ir en el if de arriba. 
+        if (VentaRedux.ModoVenta === "EditandoPedido") { //Sólo por si necesito otra condicion, sino puede ir en el if de arriba. 
             cargaVentaPorId(PedidoRedux.Venta_id)
             setVistaPedido(true)
         }
@@ -163,11 +168,13 @@ const DetallePedido = ({ navigation, route, props }) => {
         await fetchWithTimeout(REACT_APP_SV + `/api/venta/${_id}`, ROVenta)
             .then(response => response.json())
             .then(json => {
-                //dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta))
+                //console.log("🚀cargaVentaPorId ~ json:", json)
+                dispatch(setPrecioTotalVenta(json[0].PrecioTotalVenta))
                 dispatch(setMedioPago(json[0].MedioPago))
                 dispatch(setDcto(json[0].Dcto))
                 dispatch(setObservacion(json[0].Observacion))
                 dispatch(setCliente_id(json[0].Cliente_id))
+                console.log("🚀 ~ file: DetalleVenta.js:177 ~ cargaVentaPorId ~ json[0].Cliente_id:", json[0].Cliente_id)
                 setIdVenta(json[0]._idv)
                 console.log("json[0]._idp", json[0]._idp)
                 if (json[0]._idp)
@@ -182,6 +189,8 @@ const DetallePedido = ({ navigation, route, props }) => {
                     //en el boton editar en el modal donde se muestra el detalle del pedido
                     if (VentaRedux.ModoVenta === "Viendo") {
                         dispatch(updateCantidad({ _id: e.id_producto, Cantidad: e.Cantidad }))
+                        //actualiza los precioventa unitarios para que se muestren bien cuando se ve la venta desde el historial
+                        dispatch(updatePreciounitario({ _id: e.id_producto, PrecioVenta: e.PrecioVenta }))
                     }
                 })
 
@@ -190,13 +199,15 @@ const DetallePedido = ({ navigation, route, props }) => {
                     //console.log("🚀 ~ file: DetalleVenta.js:186 ~ cargaVentaPorId ~ element:", element)
                     tt += element.Cantidad * (element.PrecioVenta > 0 ? element.PrecioVenta : element.Precio)
                 });
-                //console.log("🚀 ~ file: DetalleVenta.js:197 ~ cargaVentaPorId ~ tt:", tt)
-                dispatch(setPrecioTotalVenta(tt))
+
+                //dispatch(setPrecioTotalVenta(tt))
+                console.log("🚀 ~ file: DetalleVenta.js:203 ~ cargaVentaPorId ~ tt:", tt)
+                console.log("🚀 ventaredux", VentaRedux)
 
 
                 setGananciaVenta(json[0].PrecioTotalVenta - costo)
 
-
+                //console.log("🚀 ProductosRedux FINAL:", ProductosRedux)
             })
 
             .catch(err => {
@@ -382,7 +393,7 @@ const DetallePedido = ({ navigation, route, props }) => {
 
         if (DCTO > 0) {
             return (<View style={{ flexDirection: "row", justifyContent: 'flex-end' }}>
-                <Text style={styles.TextoPrecioTotalTachado}>{"$ " + formatoMonedaChileno(PTV + DCTO)}</Text>
+                <Text style={styles.TextoPrecioTotalTachado}>{"$ " + formatoMonedaChileno(PTV)}</Text>
             </View>)
         }
         else {
@@ -641,7 +652,7 @@ const DetallePedido = ({ navigation, route, props }) => {
                             <View style={{ flexDirection: "row" }}>
                                 <Text style={styles.TextPrecioTotal}>TOTAL:</Text>
 
-                                <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(VentaRedux.PrecioTotalVenta)}</Text>
+                                <Text style={styles.TextPrecioTotal}>{"$ " + formatoMonedaChileno(VentaRedux.PrecioTotalVenta - VentaRedux.Dcto)}</Text>
                             </View>
                             {/* Si es solo vista no se muestra dar descuento y añadir observacion */}
                             {vistaVenta ?

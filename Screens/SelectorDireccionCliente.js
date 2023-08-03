@@ -30,6 +30,19 @@ const SelectorDireccionCliente = ({route}) => {
         setMarker(true)
     }
 
+    const clickCheck = () => {
+        console.log("Retorno Check Cliente:", {
+            name: Retorno,
+            params: { direccionMapa: direccion },
+            merge: true,
+        })
+        navigation.navigate({
+            name: Retorno,
+            params: { direccionMapa: direccion },
+            merge: true,
+        })
+    }
+
     return (
         <View style={styles.containerMap}>
             <MapView
@@ -70,11 +83,7 @@ const SelectorDireccionCliente = ({route}) => {
                         language: 'es',
                     }}
                 />
-                {marker ? <TouchableOpacity style={styles.buttonCheck} onPress={() => navigation.navigate({
-                    name: Retorno,
-                    params: { direccionMapa: direccion },
-                    merge: true,
-                })}>
+                {marker ? <TouchableOpacity style={styles.buttonCheck} onPress={() => clickCheck()}>
                     <Icon name='check' size={25} color="#00a8a8" />
                 </TouchableOpacity> : <></>}
 
