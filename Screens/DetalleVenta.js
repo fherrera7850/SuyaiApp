@@ -200,7 +200,8 @@ const DetallePedido = ({ navigation, route, props }) => {
                     tt += element.Cantidad * (element.PrecioVenta > 0 ? element.PrecioVenta : element.Precio)
                 });
 
-                //dispatch(setPrecioTotalVenta(tt))
+                if (VentaRedux.ModoVenta === "EditandoPedido")
+                    dispatch(setPrecioTotalVenta(tt))
                 console.log("🚀 ~ file: DetalleVenta.js:203 ~ cargaVentaPorId ~ tt:", tt)
                 console.log("🚀 ventaredux", VentaRedux)
 

@@ -15,6 +15,8 @@ import { setModoVenta } from '../Features/Venta/VentaSlice';
 import { updateCantidad, updatePreciounitario, resetCantidad } from '../Features/Venta/ProductoVentaSlice';
 import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota, setFechaEntregaDate } from '../Features/Venta/PedidoSlice';
 import Loader from '../Components/Loader';
+import CheckBox from 'expo-checkbox'
+import { Chip } from 'react-native-paper';
 
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
@@ -32,8 +34,12 @@ const Pedidos = ({ navigation }) => {
   const [pedidos, setPedidos] = useState([])
   const [cargando, setCargando] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [pedidoCompletado, setPedidoCompletado] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
+
+  const [modalConfirmaPedido, setModalConfirmaPedido] = useState(false)
+  const [isPaid, setIsPaid] = useState(true);
+  const [medioPagoFinal, setMedioPagoFinal] = useState(-1)
+
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
     PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
@@ -185,6 +191,7 @@ const Pedidos = ({ navigation }) => {
         ],
         { cancelable: false }
       );
+
     } catch (error) {
       setLoading(false);
       setModalVisible(false);
@@ -223,9 +230,9 @@ const Pedidos = ({ navigation }) => {
   }
 
   const CompletarPedidoRapido = async () => {
-    let id_venta = pedidoSeleccionado.Venta_id
-
-    try {
+    setModalVisible(false)
+    setModalConfirmaPedido(true)
+    /* try {
       setLoading(true);
 
       // Mostrar mensaje de confirmación al usuario
@@ -239,31 +246,8 @@ const Pedidos = ({ navigation }) => {
           },
           {
             text: "Completar",
-            onPress: async () => {
-              var RO = {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                timeout: 10000,
-                body: JSON.stringify({ id_venta })
-              };
-
-              let url = REACT_APP_SV + '/api/pedido/CompletarPedidoRapido';
-
-              await fetchWithTimeout(url, RO)
-                .then(response => {
-                  setModalVisible(false);
-                  if (response.status === 200) {
-                    Alert.alert("Se completó el pedido correctamente.");
-                  }
-                  setLoading(false);
-                  setPedidos([])
-                  getPedidos()
-                })
-                .catch(error => {
-                  setLoading(false);
-                  setModalVisible(false);
-                  alert("Error al completar el pedido");
-                });
+            onPress: () => {
+              handleCompletarPedido();
             },
           },
         ],
@@ -273,7 +257,42 @@ const Pedidos = ({ navigation }) => {
       setLoading(false);
       setModalVisible(false);
       alert("Error al completar el pedido");
-    }
+    } */
+
+
+  }
+
+  const handleCompletarPedido = async () => {
+    setLoading(true)
+    let id_venta = pedidoSeleccionado.Venta_id
+    let pagada = isPaid
+    let medio_pago = medioPagoFinal
+
+    var RO = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000,
+      body: JSON.stringify({ id_venta, pagada, medio_pago })
+    };
+
+    let url = REACT_APP_SV + '/api/pedido/CompletarPedidoRapido';
+
+    await fetchWithTimeout(url, RO)
+      .then(response => {
+        setModalVisible(false);
+        setModalConfirmaPedido(false)
+        if (response.status === 200) {
+          Alert.alert("Se completó el pedido correctamente.");
+        }
+        setLoading(false);
+        setPedidos([])
+        getPedidos()
+      })
+      .catch(error => {
+        setLoading(false);
+        setModalVisible(false);
+        alert("Error al completar el pedido");
+      });
 
 
   }
@@ -286,11 +305,11 @@ const Pedidos = ({ navigation }) => {
   const RenderBotonesPedido = () => {
     if (pedidoSeleccionado.Estado === "C") {
       return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-      <Button mode="text" color='#2792b2' onPress={() => VerVentaPedido()}>
-        Ver Venta
-      </Button>
+        <Button mode="text" color='#2792b2' onPress={() => VerVentaPedido()}>
+          Ver Venta
+        </Button>
 
-    </View>)
+      </View>)
     }
     else {
       return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
@@ -312,6 +331,44 @@ const Pedidos = ({ navigation }) => {
   if (loading) return Loader("Completando Pedido...")
   return (
     <View style={styles.container}>
+
+      {/* Modal de confirmación */}
+      <ReusableModal
+        visible={modalConfirmaPedido}
+        closeModal={() => setModalConfirmaPedido(false)}
+        headerTitle="Confirmación"
+        closeButton={false}
+      >
+        <View>
+          <View style={{ flexDirection: "row", marginBottom: 20 }}>
+            <Text style={{ marginEnd: 15, fontFamily: "PromptLight", fontSize: 20 }}>¿El pedido fue pagado?</Text>
+            <CheckBox
+              value={isPaid}
+              onValueChange={(value) => setIsPaid(value)}
+              color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+              style={{ alignSelf: "center" }}
+            />
+          </View>
+          {/* mediopago */}
+          <View style={{ flexDirection: "column", width: '50%', alignSelf: "center" }}>
+            <Chip icon="cash" selected={medioPagoFinal === 0} onPress={() => setMedioPagoFinal(0)}>EFECTIVO</Chip>
+            <Chip icon="cellphone-check" selected={medioPagoFinal === 1} onPress={() => setMedioPagoFinal(1)}>TRANSFERENCIA</Chip>
+            <Chip icon="credit-card" selected={medioPagoFinal === 2} onPress={() => setMedioPagoFinal(2)}>TARJETA</Chip>
+          </View>
+
+        </View>
+
+        {/* Footer del modal de confirmación */}
+        <ModalFooter>
+          <Button mode="text" color='#16a422' onPress={handleCompletarPedido}>
+            Confirmar
+          </Button>
+          <Button mode="text" color='#2792b2' onPress={() => { setModalConfirmaPedido(false); setModalVisible(true) }}>
+            Cancelar
+          </Button>
+        </ModalFooter>
+      </ReusableModal>
+
       <ReusableModal
         visible={modalVisible}
         closeModal={() => setModalVisible(false)}
@@ -319,21 +376,37 @@ const Pedidos = ({ navigation }) => {
         closeButton={true}
       >
         <View style={styles.viewFormulario}>
-          <View style={{ flexDirection: "row" }}>
-            <Icon style={styles.inputIcon} name="user" size={20} color="#000" />
+          {/* Cliente */}
+          <View style={{ flexDirection: "column" }}>
+            <View style={{ flexDirection: "row" }}>
+              {/* <Text style={styles.TextAtributoPedido}>
+                {`Cliente`}
+              </Text> */}
+              <Icon style={styles.inputIcon} name="user" size={20} color="#000" />
+            </View>
             <Text style={styles.textInputFields}>
-              {`Cliente: ${pedidoSeleccionado.Nombre ? pedidoSeleccionado.Nombre : "-CLIENTE NO REGISTRADO-"}`}
+              {`${pedidoSeleccionado.Nombre ? pedidoSeleccionado.Nombre : "-CLIENTE NO REGISTRADO-"}`}
             </Text>
           </View>
-          <View style={{ flexDirection: "row" }}>
-            <Icon style={styles.inputIcon} name="map-marker" size={20} color="#000" />
+
+          {/* Direccion */}
+          <View style={{ flexDirection: "column" }}>
+            <View style={{ flexDirection: "row" }}>
+              {/* <Text
+                style={styles.TextAtributoPedido}>
+                {`Dirección`}
+              </Text> */}
+              <Icon style={styles.inputIcon} name="map-marker" size={20} color="#000" />
+            </View>
+
             <Text onPress={() => !pedidoSeleccionado.Direccion ? {} : Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${pedidoSeleccionado.Direccion.split(" ").join("+")}`)}
               style={pedidoSeleccionado.Direccion ? styles.TextModalTelefono : styles.textInputFields}
-              selection={{ start: 0, end: 0 }} >
-              {`Dirección: ${pedidoSeleccionado.Direccion ? pedidoSeleccionado.Direccion : "-DIRECCIÓN NO REGISTRADA-"}`}
+            //selection={{ start: 0, end: 0 }} 
+            >
+              {`${pedidoSeleccionado.Direccion ? pedidoSeleccionado.Direccion : "-DIRECCIÓN NO REGISTRADA-"}`}
             </Text>
           </View>
-          {pedidoSeleccionado.Telefono ? <View style={{ flexDirection: "row" }}>
+          {pedidoSeleccionado.Telefono ? <View style={{ flexDirection: "column" }}>
             <Icon style={styles.inputIcon} name="phone" size={20} color="#000" />
             <Text style={styles.TextModalTelefono}
               onPress={() => dialCall(pedidoSeleccionado.Telefono)}
@@ -346,17 +419,27 @@ const Pedidos = ({ navigation }) => {
 
           </View> : <></>}
 
-          <View style={{ flexDirection: "row" }}>
+          {/* Se cambia mostrar Fecha de Entrega por Nota */}
+          {pedidoSeleccionado.Nota ? <View style={{ flexDirection: "column" }}>
+            <Icon style={styles.inputIcon} name="calendar-o" size={20} color="#000" />
+            {/* <Text style={styles.TextAtributoPedido} >
+              {`Nota:`}
+            </Text> */}
+            <Text style={styles.textInputFields} >
+              {`${pedidoSeleccionado.Nota}`}
+            </Text>
+          </View> : <></>}
+          {/* <View style={{ flexDirection: "row" }}>
             <Icon style={styles.inputIcon} name="calendar-o" size={20} color="#000" />
             <Text style={styles.textInputFields} >
               {`Fecha Entrega: ${moment(pedidoSeleccionado.FechaEntrega).format("DD-MM-yyyy")}`}
             </Text>
-          </View>
+          </View> */}
 
           <View style={{ marginBottom: 15 }}>
             <View style={{ flexDirection: "row" }}>
               <Icon style={styles.inputIcon} name="shopping-bag" size={20} color="#000" />
-              <Text style={styles.textInputFields}>Productos</Text>
+              {/* <Text style={styles.textInputFields}>Productos</Text> */}
             </View>
 
             {
@@ -388,7 +471,7 @@ const Pedidos = ({ navigation }) => {
               Completar
             </Button>
           </View> */}
-          <RenderBotonesPedido/>
+          <RenderBotonesPedido />
         </ModalFooter>
       </ReusableModal>
       <Agenda
@@ -448,6 +531,12 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: "#00BBF2"
   },
+  TextAtributoPedido: {
+    fontFamily: "PromptSemiBold",
+    fontSize: 16,
+    paddingLeft: 10,
+    marginBottom: 10,
+  },
   TextSinPedidos: {
     fontFamily: "PromptMedium",
     fontSize: 16,
@@ -468,7 +557,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 5,
-    marginLeft: 5
+    marginLeft: 5,
+    alignSelf: "flex-start",
+    marginBottom:10
   },
   inputIconWsp: {
     /*  justifyContent: "center",

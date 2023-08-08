@@ -14,6 +14,7 @@ import { resetV } from '../Features/Venta/VentaSlice'
 import cloneDeep from 'lodash.clonedeep'
 import { useIsFocused } from '@react-navigation/native';
 
+
 const GenerarPedido = ({ route, navigation, props }) => {
 
     const dispatch = useDispatch();
@@ -78,8 +79,29 @@ const GenerarPedido = ({ route, navigation, props }) => {
     useEffect(() => {
         if (VentaRedux.Cliente_id && VentaRedux.ModoVenta === "Editando") {
             setCargandoDatos(true)
+            /* if (PedidoRedux.FechaEntrega)
+            let FechaHoy = moment(horaCliente(new Date())).format("YYYYMMDD")
+            dispatch(setFechaEntrega(formatDateString(moment(FechaHoy).format("YYYY-MM-DD"), true)))
+            dispatch(setFechaEntregaDate(moment(horaCliente(new Date())).format("yyyy-MM-DD"))) *//* 
+            let FechaManana = moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("YYYYMMDD")
+            dispatch(setFechaEntrega(formatDateString(moment(FechaManana).format("YYYY-MM-DD"), true)))
+            dispatch(setFechaEntregaDate(moment(horaCliente(new Date().setDate(new Date().getDate() + 1))).format("yyyy-MM-DD"))) */
+
+
+
+
             getCliente()
             setCargandoDatos(false)
+        }
+        console.log("PedidoRedux.FechaEntregaDate", PedidoRedux.FechaEntregaDate)
+        console.log(moment().format("YYYY-MM-DD"))
+        if (PedidoRedux.FechaEntregaDate === moment().format("YYYY-MM-DD")) {
+            console.log("es hoy")
+            setUsarHoy(true)
+        }
+        if (PedidoRedux.FechaEntregaDate === moment().add(1, 'days').format("YYYY-MM-DD")) {
+            console.log("es MÑA")
+            setUsarManana(true)
         }
     }, [])
 
@@ -203,7 +225,7 @@ const GenerarPedido = ({ route, navigation, props }) => {
         return fecha
     }
 
-    const IngresarPedido = async () => {
+    const IngresarPedido = async (GuardarCambios) => {
         //Venta ProductosVenta Pedido
         if (!PedidoRedux.FechaEntrega) {
             Alert.alert("Error", "Indique Fecha de Entrega del pedido")
@@ -237,7 +259,8 @@ const GenerarPedido = ({ route, navigation, props }) => {
             Nota: PedidoRedux.Nota?.trim() === "" ? null : PedidoRedux.Nota?.trim(),
             FechaCreacion: FechaActual,
             Estado: "I",
-            Venta_id: PedidoRedux.Venta_id
+            Venta_id: PedidoRedux.Venta_id,
+            GuardarCambios: GuardarCambios
         }
         console.log("🚀 ~ file: GenerarPedido.js:228 ~ IngresarPedido ~ objPedido", objPedido)
 
@@ -281,7 +304,7 @@ const GenerarPedido = ({ route, navigation, props }) => {
                         },
                         {
                             text: "Reintentar",
-                            onPress: () => IngresarPedido(),
+                            onPress: () => IngresarPedido(GuardarCambios),
                             style: "default"
                         }
                     ]
@@ -383,15 +406,21 @@ const GenerarPedido = ({ route, navigation, props }) => {
             </View>
 
             {VentaRedux.ModoVenta === "Editando" ? <View style={styles.viewButtonGuardar}>
-                <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido()}>
+                <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido(false)}>
                     <Text style={styles.textButtonGuardar}>Ingresar Pedido</Text>
                 </TouchableOpacity>
             </View> : <></>}
 
-            {VentaRedux.ModoVenta === "EditandoPedido" ? <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido()}>
-
-                <Text style={styles.textButtonGuardar}>Completar Pedido</Text>
-            </TouchableOpacity> : <></>}
+            {VentaRedux.ModoVenta === "EditandoPedido" ?
+                <View>
+                    <TouchableOpacity style={styles.buttonGuardarCambios} onPress={() => IngresarPedido(true)}>
+                        <Text style={styles.textButtonGuardar}>Guardar Cambios</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido(false)}>
+                        <Text style={styles.textButtonGuardar}>Completar Pedido</Text>
+                    </TouchableOpacity>
+                </View>
+                : <></>}
 
 
         </View>
@@ -449,6 +478,17 @@ const styles = StyleSheet.create({
         borderRadius: 4,
         elevation: 3,
         backgroundColor: '#00a8a8',
+        height: 60,
+        marginHorizontal: 5
+    },
+    buttonGuardarCambios: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        //paddingVertical: 12,
+        //paddingHorizontal: 32,
+        borderRadius: 4,
+        elevation: 3,
+        backgroundColor: '#daa609',
         height: 60,
         marginHorizontal: 5
     },
