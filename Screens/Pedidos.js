@@ -18,6 +18,10 @@ import Loader from '../Components/Loader';
 import CheckBox from 'expo-checkbox'
 import { Chip } from 'react-native-paper';
 
+import { useRef } from 'react';
+import BottomSheet from '@gorhom/bottom-sheet';
+//import ModalInferior from '../Components/ModalInferior';
+
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
   monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sept', 'Oct', 'Nov', 'Dic'],
@@ -40,6 +44,16 @@ const Pedidos = ({ navigation }) => {
   const [isPaid, setIsPaid] = useState(true);
   const [medioPagoFinal, setMedioPagoFinal] = useState(-1)
 
+  const bottomSheetRef = useRef(null);
+  const openBottomSheet = () => {
+    if (bottomSheetRef.current) {
+      bottomSheetRef.current.expand(); // Abre la BottomSheet
+    }
+  };
+  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+  const [resumenDiario, setResumenDiario] = useState(null)
+
+
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
     PromptThin: require("./../assets/fonts/Prompt-Thin.ttf"),
@@ -53,6 +67,7 @@ const Pedidos = ({ navigation }) => {
   useLayoutEffect(() => {
     setPedidos([])
     getPedidos()
+    getResumenDiario()
   }, [isFocused])
 
   const getPedidos = async () => {
@@ -85,6 +100,45 @@ const Pedidos = ({ navigation }) => {
         setCargando(false)
       })
   }
+
+  const getResumenDiario = async () => {
+    setCargando(true);
+
+    const ROResumenPedidos = {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000
+    };
+
+    await fetchWithTimeout(REACT_APP_SV + '/api/pedido/ResumenDiario', ROResumenPedidos)
+      .then(response => {
+        //console.log("🚀 ~ file: Pedidos.js:111 ~ getPedidos ~ response:", response)
+        switch (response.status) {
+          case 200:
+            return response.json();
+          case 204:
+            Alert.alert("No hay pedidos aun para hoy")
+            break;
+          default:
+            Alert.alert("ERROR: No se ha podido cargar el resumen de hoy")
+            break;
+        }
+        //return response.json(); // Devuelve el resultado del parsing JSON
+      })
+      .then(json => {
+        console.log("🚀 ~ file: Pedidos.js:118 ~ getResumenDiario ~ json:", json);
+        setResumenDiario(json);
+      })
+      .catch(err => {
+        console.log("Error: ", "No se ha podido cargar el resumen diario");
+      })
+      .finally(() => {
+        setCargando(false);
+      });
+  };
+
+
+
 
   const ClickPedido = (item) => {
     setPedidoSeleccionado(item)
@@ -180,6 +234,7 @@ const Pedidos = ({ navigation }) => {
                   setLoading(false);
                   setPedidos([])
                   getPedidos()
+                  getResumenDiario()
                 })
                 .catch(error => {
                   setLoading(false);
@@ -287,6 +342,7 @@ const Pedidos = ({ navigation }) => {
         setLoading(false);
         setPedidos([])
         getPedidos()
+        getResumenDiario()
       })
       .catch(error => {
         setLoading(false);
@@ -327,10 +383,62 @@ const Pedidos = ({ navigation }) => {
     }
   }
 
+
+  const Tabla = () => {
+    return (
+      <View style={styles.styledTable}>
+        <View style={styles.tableHeader}>
+          <Text style={styles.headerText}>Nombre</Text>
+          <Text style={styles.headerTextCenter}>Entregados</Text>
+          <Text style={styles.headerTextCenter}>Total</Text>
+        </View>
+        <View style={styles.tableBody}>
+          {
+            resumenDiario ? resumenDiario.Productos.map((itemResumen, index2) => {
+              return <View key={index2} style={styles.tableRow}>
+                <Text style={styles.cellText}>{itemResumen.Producto}</Text>
+                <Text style={styles.cellTextCenter}>{itemResumen.Entregados}</Text>
+                <Text style={styles.cellTextCenter}>{itemResumen.Total}</Text>
+              </View>
+            }) : <></>
+
+
+          }
+
+          {/* <View style={styles.tableRow}>
+            <Text style={styles.cellText}>Recarga 20 lt</Text>
+            <Text style={styles.cellTextCenter}>54</Text>
+            <Text style={styles.cellTextCenter}>0</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.cellText}>Recarga 20 lt</Text>
+            <Text style={styles.cellTextCenter}>54</Text>
+            <Text style={styles.cellTextCenter}>0</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.cellText}>Recarga 20 lt</Text>
+            <Text style={styles.cellTextCenter}>54</Text>
+            <Text style={styles.cellTextCenter}>0</Text>
+          </View>
+          <View style={styles.tableRow}>
+            <Text style={styles.cellText}>Recarga 20 lt</Text>
+            <Text style={styles.cellTextCenter}>54</Text>
+            <Text style={styles.cellTextCenter}>0</Text>
+          </View> */}
+          {/* Add more rows as needed */}
+        </View>
+      </View>
+    );
+  };
+
+  /* RENDER */
+
   if (!fontsLoaded) return null
   if (loading) return Loader("Completando Pedido...")
   return (
     <View style={styles.container}>
+
+
 
       {/* Modal de confirmación */}
       <ReusableModal
@@ -474,6 +582,7 @@ const Pedidos = ({ navigation }) => {
           <RenderBotonesPedido />
         </ModalFooter>
       </ReusableModal>
+      {/* Calendario */}
       <Agenda
         items={pedidos}
         // If provided, a standard RefreshControl will be added for "Pull to Refresh" functionality. Make sure to also set the refreshing prop correctly
@@ -489,11 +598,160 @@ const Pedidos = ({ navigation }) => {
           </View>
         }}
       />
+      {/* <ModalInferior/> */}
+      <TouchableOpacity
+        style={styles.floatingButton}
+        onPress={openBottomSheet}
+      >
+        <Icon name="bar-chart" size={25} color='white' />
+      </TouchableOpacity>
+
+     <BottomSheet
+        ref={bottomSheetRef}
+        snapPoints={['80%', '50%']}
+        index={-1}
+        backgroundStyle={styles.bottomSheetBackground}
+        enablePanDownToClose={true}
+      > 
+        <View style={styles.bottomSheetContent}>
+          <View style={styles.containerBS}>
+
+            <View style={{ minHeight: 50 }}>
+              <Text style={styles.textTituloResumenHoy}>
+                {`Resumen de hoy`}
+              </Text>
+            </View>
+
+            <View style={{ flexDirection: "column" }}>
+              <View style={{ flexDirection: "row" }}>
+                <Icon style={styles.iconItemsBottomsheet} name="shopping-bag" size={17} color="#000" />
+                <Text style={styles.textAtributosBottomsheet}>
+                  {`Pedidos entregados/total`}
+                </Text>
+                <Text style={styles.textValorAtributosBottomsheet}>
+                  {`${resumenDiario?.CantidadEntregada} / ${resumenDiario?.CantidadPedidos}`}
+                </Text>
+              </View>
+
+            </View>
+
+            <View style={{ marginBottom: 10 }}>
+              <View style={{ flexDirection: "row" }}>
+                <Icon style={styles.inputIcon} name="shopping-cart" size={19} color="#000" />
+                <Text style={styles.textAtributosBottomsheet}>
+                  {`Productos`}
+                </Text>
+              </View>
+
+              <Tabla />
+
+
+              {/* {
+                resumenDiario?.Productos ? resumenDiario.Productos.map((itemResumen, index2) => {
+                  return <View style={{ marginLeft: 25 }} key={index2}>
+                    <Text style={styles.textDetalleProductosModal}>{`${itemResumen.Total} x ${itemResumen.Producto}  (${itemResumen.Entregados} entregados)`}</Text>
+                  </View>
+                }) : <>
+                  <Text>No hay productos para mostrar</Text>
+                </>
+
+              } */}
+            </View>
+
+
+            <View>
+              <View style={{ flexDirection: "row" }}>
+                <Icon style={styles.iconItemsBottomsheet} name="money" size={19} color="#000" />
+                <Text style={styles.textAtributosBottomsheet}>
+                  {`Total:`}
+                </Text>
+                <Text style={styles.textValorAtributosBottomsheet}>
+                  {'$' + formatoMonedaChileno(resumenDiario?.MontoTotal)}
+                </Text>
+              </View>
+            </View>
+
+
+          </View>
+        </View>
+      </BottomSheet>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+
+  /* TABLA */
+
+  styledTable: {
+    //margin: 25,
+    width: '75%', // Adjust this value as needed
+    backgroundColor: '#ffffff',
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    shadowOffset: {
+      width: 0,
+      height: 0,
+    },
+    alignSelf:"center"
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#00BBF2',
+    borderTopLeftRadius: 10,
+    borderTopRightRadius: 10,
+  },
+  headerText: {
+    flex: 1,
+    paddingBottom: 7,
+    paddingLeft: 7,
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: 'bold',
+  },
+  headerTextCenter: {
+    flex: 1,
+    paddingBottom: 7,
+    paddingLeft: 7,
+    fontSize: 16,
+    color: '#ffffff',
+    fontWeight: 'bold',
+    textAlign: "center"
+  },
+  tableBody: {
+    borderColor: '#dddddd',
+    borderBottomWidth: 1,
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderBottomColor: '#dddddd',
+    borderBottomWidth: 1,
+    backgroundColor: '#f3f3f3',
+  },
+  activeRow: {
+    backgroundColor: '#ffffff',
+    borderColor: '#009879',
+    borderBottomWidth: 2,
+  },
+  cellText: {
+    flex: 1,
+    paddingBottom: 7,
+    paddingLeft: 7,
+    fontSize: 14,
+    color: '#000000',
+  },
+  cellTextCenter: {
+    flex: 1,
+    paddingBottom: 7,
+    paddingLeft: 7,
+    fontSize: 14,
+    color: '#000000',
+    textAlign: "center"
+  },
+
+  /* OTROS */
   container: {
     flex: 1,
   },
@@ -553,13 +811,24 @@ const styles = StyleSheet.create({
   viewFormulario: {
     padding: 10,
   },
+  containerBS: {
+    paddingBottom: 10,
+  },
   inputIcon: {
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 5,
     marginLeft: 5,
     alignSelf: "flex-start",
-    marginBottom:10
+    marginBottom: 10
+  },
+  iconItemsBottomsheet: {
+    //justifyContent: "center",
+    //alignItems: "center",
+    paddingTop: 5,
+    marginLeft: 5,
+    alignSelf: "center",
+    marginBottom: 10
   },
   inputIconWsp: {
     /*  justifyContent: "center",
@@ -575,6 +844,32 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     //width: "90%",
   },
+  textTituloResumenHoy: {
+    fontFamily: "PromptSemiBold",
+    fontSize: 24,
+    //letterSpacing: 1,
+    paddingLeft: 0,
+    marginBottom: 15,
+    //width: "90%",
+  },
+  textAtributosBottomsheet: {
+    fontFamily: "PromptMedium",
+    fontSize: 16,
+    //letterSpacing: 1,
+    paddingLeft: 10,
+    marginBottom: 10,
+    //width: "90%",
+    alignSelf: "flex-end"
+  },
+  textValorAtributosBottomsheet: {
+    fontFamily: "PromptLight",
+    fontSize: 16,
+    //letterSpacing: 1,
+    marginLeft: 30,
+    marginBottom: 10,
+    //width: "90%",
+    alignSelf: "flex-end"
+  },
   textDetalleProductosModal: {
     fontFamily: "PromptLight",
     fontSize: 13,
@@ -582,6 +877,35 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginBottom: 1,
     //width: "90%",
+  },
+
+  floatingButton: {
+    position: 'absolute',
+    bottom: 20,
+    left: 10, // Cambia 'right' a 'left'
+    backgroundColor: '#00BBF2',
+    padding: 10,
+    borderRadius: 25,
+    width: 50,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    elevation: 4,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+  },
+  bottomSheetBackground: {
+    backgroundColor: 'rgba(255, 255, 255, 1)',
+  },
+  bottomSheetContent: {
+    backgroundColor: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 10
+  },
+  bottomSheetText: {
+    fontSize: 20,
   },
 });
 

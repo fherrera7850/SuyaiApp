@@ -88,7 +88,7 @@ const DetallePedido = ({ navigation, route, props }) => {
         //if (VentaRedux.ModoVenta === "Editando" || VentaRedux.ModoVenta === "Viendo") {
 
         if (VentaRedux.ModoVenta === "Editando") {
-            
+
             let TempPedido = cloneDeep(ProductosRedux)
             TempPedido = TempPedido.filter((x) => {
                 return x.Cantidad > 0;
@@ -469,18 +469,20 @@ const DetallePedido = ({ navigation, route, props }) => {
             </>)
         }
         else {
-            return (<><Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
-                <View style={{ flexDirection: "row" }}>
-                    <Text style={styles.TextoFinalizar}>Ingresar Venta</Text>
-                    <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
-                </View>
-            </Pressable>
-                <Pressable style={styles.BotonGenerarPedido} onPress={() => IngresaPedido()} >
-                    <View style={{ flexDirection: "row" }}>
-                        <Text style={styles.TextoFinalizar}>Generar Pedido</Text>
-                        <Icon name='send' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
-                    </View>
-                </Pressable></>)
+            return (
+                <>
+                    {/* <Pressable disabled={cargandoVenta} style={styles.BotonFinalizar} onPress={() => IngresaVenta()} >
+                        <View style={{ flexDirection: "row" }}>
+                            <Text style={styles.TextoFinalizar}>Ingresar Venta</Text>
+                            <Icon name='check' color={"#ffff"} size={25} style={{ alignSelf: "center", marginLeft: 5 }} />
+                        </View>
+                    </Pressable> */}
+                    <Pressable style={styles.BotonFinalizar} onPress={() => IngresaPedido()} >
+                        <View style={{ flexDirection: "row" }}>
+                            <Text style={styles.TextoFinalizar}>Siguiente</Text>
+                            <Icon name='arrow-right' color={"#ffff"} size={20} style={{ alignSelf: "center", marginLeft: 5 }} />
+                        </View>
+                    </Pressable></>)
         }
     }
 

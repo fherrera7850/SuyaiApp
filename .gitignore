@@ -18,3 +18,5 @@ app.json
 Todo.md
 Readme.md
 CommonErrors.md
+package-lock.json
+eas.json

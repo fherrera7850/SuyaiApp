@@ -405,6 +405,17 @@ const GenerarPedido = ({ route, navigation, props }) => {
                 />
             </View>
 
+            {/* <View style={{ flexDirection: "row" }}>
+                <Text style={{ marginEnd: 15, fontFamily: "PromptLight", fontSize: 20 }}>¿El pedido fue pagado?</Text>
+                <CheckBox
+                    value={isPaid}
+                    onValueChange={(value) => setIsPaid(value)}
+                    color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+                    style={{ alignSelf: "center" }}
+                />
+            </View> */}
+
+
             {VentaRedux.ModoVenta === "Editando" ? <View style={styles.viewButtonGuardar}>
                 <TouchableOpacity style={styles.buttonGuardar} onPress={() => IngresarPedido(false)}>
                     <Text style={styles.textButtonGuardar}>Ingresar Pedido</Text>
