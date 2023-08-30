@@ -42,6 +42,7 @@ const GenerarPedido = ({ route, navigation, props }) => {
     const [cargando, setCargando] = useState(false)
     const [cargandoDatos, setCargandoDatos] = useState(false)
 
+    const [isPaid, setIsPaid] = useState(false);
 
     const isFocused = useIsFocused();
 
@@ -248,7 +249,8 @@ const GenerarPedido = ({ route, navigation, props }) => {
             Cliente_id: VentaRedux.Cliente_id,
             Fecha: FechaActual,
             Dcto: VentaRedux.Dcto,
-            Observacion: VentaRedux.Observacion ? VentaRedux.Observacion.trim() : null
+            Observacion: VentaRedux.Observacion ? VentaRedux.Observacion.trim() : null,
+            Pagada : isPaid?'S':'N'
         }
         console.log("🚀 ~ file: GenerarPedido.js:218 ~ IngresarPedido ~ objVenta", objVenta)
 
@@ -402,6 +404,16 @@ const GenerarPedido = ({ route, navigation, props }) => {
                     value={PedidoRedux.Nota}
                     onChangeText={(text) => dispatch(setNota(text))}
                     multiline
+                />
+            </View>
+
+            <View style={{ flexDirection: "row" }}>
+                <Text style={{ marginEnd:10, fontFamily: "PromptLight", fontSize: 20, marginLeft: 25 }}>¿El pedido fue pagado?</Text>
+                <CheckBox
+                    value={isPaid}
+                    onValueChange={(value) => setIsPaid(value)}
+                    //color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+                    style={styles.checkbox}
                 />
             </View>
 

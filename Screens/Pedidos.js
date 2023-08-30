@@ -1,5 +1,5 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Alert, Linking } from 'react-native';
+import React, { useState, useLayoutEffect, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, ToastAndroid, Alert, Linking, TextInput } from 'react-native';
 import { Agenda, LocaleConfig } from 'react-native-calendars';
 import { Avatar, Card, Button } from 'react-native-paper';
 import { fetchWithTimeout, formatDateString, formatoMonedaChileno, FormatoWhatsapp } from '../Components/util';
@@ -14,12 +14,13 @@ import { useDispatch } from 'react-redux';
 import { setModoVenta } from '../Features/Venta/VentaSlice';
 import { updateCantidad, updatePreciounitario, resetCantidad } from '../Features/Venta/ProductoVentaSlice';
 import { setVenta_Id, setDireccion, setTelefono, setFechaEntrega, setNota, setFechaEntregaDate } from '../Features/Venta/PedidoSlice';
-import Loader from '../Components/Loader';
+import Loader, { LoaderPequenito } from '../Components/Loader';
 import CheckBox from 'expo-checkbox'
 import { Chip } from 'react-native-paper';
 
 import { useRef } from 'react';
 import BottomSheet from '@gorhom/bottom-sheet';
+import cloneDeep from 'lodash.clonedeep';
 //import ModalInferior from '../Components/ModalInferior';
 
 LocaleConfig.locales['es'] = {
@@ -44,6 +45,8 @@ const Pedidos = ({ navigation }) => {
   const [isPaid, setIsPaid] = useState(true);
   const [medioPagoFinal, setMedioPagoFinal] = useState(-1)
 
+  const [completadoPagado, setCompletadoPagado] = useState(true);
+
   const bottomSheetRef = useRef(null);
   const openBottomSheet = () => {
     if (bottomSheetRef.current) {
@@ -53,6 +56,11 @@ const Pedidos = ({ navigation }) => {
   const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
   const [resumenDiario, setResumenDiario] = useState(null)
 
+  const [loadingPequenito, setLoadingPequenito] = useState(false);
+
+  const [modalFiltrosVisible, setModalFiltrosVisible] = useState(false);
+  const [filtroCliente, setFiltroCliente] = useState("");
+  const [filtroPagados, setFiltroPagados] = useState(false);
 
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
@@ -69,6 +77,23 @@ const Pedidos = ({ navigation }) => {
     getPedidos()
     getResumenDiario()
   }, [isFocused])
+
+  useEffect(() => {
+    navigation.setOptions({
+      headerRight: () => {
+        return (<View style={{ flexDirection: "row" }}>
+          <TouchableOpacity onPress={() => setModalFiltrosVisible(true)}
+            style={{
+              marginRight: 15,
+              paddingRight: 12,
+            }}>
+            <Icon name='sliders' size={27} color="#00BBF2" />
+          </TouchableOpacity>
+
+        </View>)
+      }
+    })
+  }, [navigation])
 
   const getPedidos = async () => {
 
@@ -142,8 +167,10 @@ const Pedidos = ({ navigation }) => {
 
   const ClickPedido = (item) => {
     setPedidoSeleccionado(item)
+    setCompletadoPagado(item.Pagada === 'S' ? true : false)
+    console.log("🚀 ~ file: Pedidos.js:148 ~ ClickPedido ~ item.Pagada:", item.Pagada)
     setModalVisible(true)
-    console.log("🚀 ~ file: Pedidos.js:124 ~ ClickPedido ~ item", item)
+    //console.log("🚀 ~ file: Pedidos.js:124 ~ ClickPedido ~ item", item)
   }
 
   const renderItem = (item) => {
@@ -383,6 +410,43 @@ const Pedidos = ({ navigation }) => {
     }
   }
 
+  const RenderBotonesFiltros = () => {
+
+    return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
+      <Button disabled mode="text" color='#ea4239' onPress={() => QuitarFiltros()}>
+        Quitar Filtros
+      </Button>
+      <Button disabled mode="text" color='#2792b2' onPress={() => AplicarFiltros()}>
+        Aplicar
+      </Button>
+    </View>)
+
+  }
+
+  const AplicarFiltros = () => {
+
+    let clonePedidos = cloneDeep(pedidos)
+    //setPedidos([])
+
+    const arrayFiltrado = clonePedidos.filter(item => {
+      const contieneFiltro = item.Pedidos.some(pedido => {
+        const contieneTexto = pedido.Nombre.toLowerCase().includes(filtroCliente.toLowerCase()) ||
+          (pedido.Direccion && pedido.Direccion.toLowerCase().includes(filtroCliente.toLowerCase()));
+
+        const cumpleFiltroPagados = filtroPagados ? pedido.Pagada === 'N' : true;
+
+        return contieneTexto && cumpleFiltroPagados;
+      });
+
+      return contieneFiltro;
+    });
+
+    console.log(arrayFiltrado)
+  }
+
+  const QuitarFiltros = () => {
+
+  }
 
   const Tabla = () => {
     return (
@@ -431,6 +495,38 @@ const Pedidos = ({ navigation }) => {
     );
   };
 
+  const marcaCompletadoPagado = async (pagado) => {
+
+    setLoadingPequenito(true) //mustra loader pequeñito
+    let id_pedido = pedidoSeleccionado.Pedido_id
+    let pagada = pagado ? 'S' : 'N'
+
+    var RO = {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      timeout: 10000,
+      body: JSON.stringify({ id_pedido, pagada })
+    };
+
+    let url = REACT_APP_SV + '/api/pedido/ActualizaPedidoPagado';
+
+    await fetchWithTimeout(url, RO)
+      .then(response => {
+        if (response.status === 200) {
+          setCompletadoPagado(pagado)
+          setLoadingPequenito(false); //oculta loader pequeñito
+          setPedidos([])
+          getPedidos() //se actualiza los pedidos para que tome la actualizacion de pagado
+          ToastAndroid.show('Se actualizó el pago del pedido', ToastAndroid.SHORT)
+          
+        }
+      })
+      .catch(error => {
+        setLoadingPequenito(false); //oculta loader pequeñito
+        alert("Error al actualizar el pago el pedido");
+      });
+  }
+
   /* RENDER */
 
   if (!fontsLoaded) return null
@@ -438,25 +534,27 @@ const Pedidos = ({ navigation }) => {
   return (
     <View style={styles.container}>
 
-
-
       {/* Modal de confirmación */}
       <ReusableModal
         visible={modalConfirmaPedido}
         closeModal={() => setModalConfirmaPedido(false)}
-        headerTitle="Confirmación"
+        headerTitle="Confirme medio de pago"
         closeButton={false}
       >
         <View>
-          <View style={{ flexDirection: "row", marginBottom: 20 }}>
-            <Text style={{ marginEnd: 15, fontFamily: "PromptLight", fontSize: 20 }}>¿El pedido fue pagado?</Text>
-            <CheckBox
-              value={isPaid}
-              onValueChange={(value) => setIsPaid(value)}
-              color='#0e25d3' // Cambia el color del checkbox según tu preferencia
-              style={{ alignSelf: "center" }}
-            />
-          </View>
+          {pedidoSeleccionado.Pagada === 'N' ?
+            <View style={{ flexDirection: "row", marginBottom: 20 }}>
+              <Text style={{ marginEnd: 15, fontFamily: "PromptLight", fontSize: 20 }}>¿El pedido fue pagado?</Text>
+              <CheckBox
+                value={isPaid}
+                onValueChange={(value) => setIsPaid(value)}
+                color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+                style={{ alignSelf: "center" }}
+              />
+            </View>
+            :
+            <></>}
+
           {/* mediopago */}
           <View style={{ flexDirection: "column", width: '50%', alignSelf: "center" }}>
             <Chip icon="cash" selected={medioPagoFinal === 0} onPress={() => setMedioPagoFinal(0)}>EFECTIVO</Chip>
@@ -477,6 +575,8 @@ const Pedidos = ({ navigation }) => {
         </ModalFooter>
       </ReusableModal>
 
+
+      {/* Modal vista pedido seleccionado */}
       <ReusableModal
         visible={modalVisible}
         closeModal={() => setModalVisible(false)}
@@ -560,10 +660,33 @@ const Pedidos = ({ navigation }) => {
             }
           </View>
 
+
+
           <View style={{ flexDirection: "row" }}>
             <Text style={styles.textInputFields} >
-              {`Total: ${"$ " + formatoMonedaChileno(pedidoSeleccionado.PrecioTotalVenta)}`}
+              {`Total:`}
             </Text>
+            <Text style={styles.textInputFieldsBold} >
+              {`${"$ " + formatoMonedaChileno(pedidoSeleccionado.PrecioTotalVenta)}`}
+            </Text>
+          </View>
+
+          <View style={{ flexDirection: "row", marginBottom: 20 }}>
+            <Text style={{
+              paddingLeft: 10,
+              marginEnd: 15,
+              fontFamily: "PromptLight",
+              fontSize: 17,
+              alignSelf: "center"
+            }}>Pagado</Text>
+            <CheckBox
+              value={completadoPagado}
+              onValueChange={(value) => marcaCompletadoPagado(value)}
+              //color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+              style={{ alignSelf: "center" }}
+              disabled={loadingPequenito}
+            />
+            {loadingPequenito ? <LoaderPequenito /> : <></>}
           </View>
 
         </View>
@@ -582,6 +705,51 @@ const Pedidos = ({ navigation }) => {
           <RenderBotonesPedido />
         </ModalFooter>
       </ReusableModal>
+
+      {/* Modal filtros */}
+      <ReusableModal
+        visible={modalFiltrosVisible}
+        closeModal={() => setModalFiltrosVisible(false)}
+        headerTitle="Filtros"
+        closeButton={true}
+      >
+        <View style={styles.viewFormulario}>
+          <View style={{ flexDirection: "row" }}>
+            <Text
+              style={styles.textInputFields}
+            >
+              {`Cliente`}
+            </Text>
+            <TextInput style={styles.textInputFiltroCliente}
+              placeholder="Nombre o Direccion"
+              value={filtroCliente}
+              onChangeText={(text) => setFiltroCliente(text)}
+            />
+          </View>
+
+          <View style={{ flexDirection: "row", marginBottom: 20 }}>
+            <Text style={{
+              paddingLeft: 10,
+              marginEnd: 15,
+              fontFamily: "PromptLight",
+              fontSize: 17,
+              alignSelf: "center"
+            }}>Pendientes de pago</Text>
+            <CheckBox
+              value={filtroPagados}
+              onValueChange={(value) => setFiltroPagados(value)}
+              //color='#0e25d3' // Cambia el color del checkbox según tu preferencia
+              style={{ alignSelf: "center" }}
+            />
+          </View>
+
+        </View>
+        <ModalFooter>
+          <RenderBotonesFiltros />
+        </ModalFooter>
+      </ReusableModal>
+
+
       {/* Calendario */}
       <Agenda
         items={pedidos}
@@ -598,6 +766,8 @@ const Pedidos = ({ navigation }) => {
           </View>
         }}
       />
+
+
       {/* <ModalInferior/> */}
       <TouchableOpacity
         style={styles.floatingButton}
@@ -606,13 +776,13 @@ const Pedidos = ({ navigation }) => {
         <Icon name="bar-chart" size={25} color='white' />
       </TouchableOpacity>
 
-     <BottomSheet
+      <BottomSheet
         ref={bottomSheetRef}
         snapPoints={['80%', '50%']}
         index={-1}
         backgroundStyle={styles.bottomSheetBackground}
         enablePanDownToClose={true}
-      > 
+      >
         <View style={styles.bottomSheetContent}>
           <View style={styles.containerBS}>
 
@@ -695,7 +865,7 @@ const styles = StyleSheet.create({
       width: 0,
       height: 0,
     },
-    alignSelf:"center"
+    alignSelf: "center"
   },
   tableHeader: {
     flexDirection: 'row',
@@ -838,11 +1008,27 @@ const styles = StyleSheet.create({
   },
   textInputFields: {
     fontFamily: "PromptLight",
-    fontSize: 16,
+    fontSize: 17,
     //letterSpacing: 1,
     paddingLeft: 10,
     marginBottom: 10,
     //width: "90%",
+  },
+  textInputFieldsBold: {
+    fontFamily: "PromptSemiBold",
+    fontSize: 17,
+    //letterSpacing: 1,
+    paddingLeft: 10,
+    marginBottom: 10,
+    //width: "90%",
+  },
+  textInputFiltroCliente: {
+    fontFamily: "PromptLight",
+    fontSize: 17,
+    //letterSpacing: 1,
+    paddingLeft: 10,
+    marginBottom: 10,
+    minWidth: "100%"
   },
   textTituloResumenHoy: {
     fontFamily: "PromptSemiBold",
