@@ -246,7 +246,7 @@ const RealizarPedido = ({ navigation, route, props }) => {
             var RO = {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' },
-                timeout: 5000
+                timeout: 10000
             };
             var url = REACT_APP_SV + '/api/producto/'
             console.log("🚀 ~ file: Venta.js ~ line 180 ~ cargaProductos ~ url", url)
@@ -269,7 +269,7 @@ const RealizarPedido = ({ navigation, route, props }) => {
             setLoading(false)
             Alert.alert(
                 "ERROR  ",
-                "No se han podido cargar los productos" + error,
+                "No se han podido cargar los productos: " + error,
                 [
                     {
                         text: "Cancelar",

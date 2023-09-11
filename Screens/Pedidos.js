@@ -36,7 +36,7 @@ const Pedidos = ({ navigation }) => {
 
   const dispatch = useDispatch();
   const isFocused = useIsFocused();
-  const [pedidos, setPedidos] = useState([])
+  const [pedidos, setPedidos] = useState({});
   const [cargando, setCargando] = useState(false)
   const [loading, setLoading] = useState(false)
   const [modalVisible, setModalVisible] = useState(false)
@@ -53,14 +53,15 @@ const Pedidos = ({ navigation }) => {
       bottomSheetRef.current.expand(); // Abre la BottomSheet
     }
   };
-  const [isBottomSheetOpen, setIsBottomSheetOpen] = useState(false);
+
   const [resumenDiario, setResumenDiario] = useState(null)
 
   const [loadingPequenito, setLoadingPequenito] = useState(false);
 
   const [modalFiltrosVisible, setModalFiltrosVisible] = useState(false);
   const [filtroCliente, setFiltroCliente] = useState("");
-  const [filtroPagados, setFiltroPagados] = useState(false);
+  const [filtroSinPagar, setFiltroSinPagar] = useState(false);
+  const [filtroActivo, setFiltroActivo] = useState(false);
 
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState({})
   const [fontsLoaded] = useFonts({
@@ -161,9 +162,6 @@ const Pedidos = ({ navigation }) => {
         setCargando(false);
       });
   };
-
-
-
 
   const ClickPedido = (item) => {
     setPedidoSeleccionado(item)
@@ -413,10 +411,10 @@ const Pedidos = ({ navigation }) => {
   const RenderBotonesFiltros = () => {
 
     return (<View style={{ flexDirection: "row", justifyContent: "flex-end" }}>
-      <Button disabled mode="text" color='#ea4239' onPress={() => QuitarFiltros()}>
+      <Button disabled={!filtroActivo} mode="text" color='#ea4239' onPress={() => QuitarFiltros()}>
         Quitar Filtros
       </Button>
-      <Button disabled mode="text" color='#2792b2' onPress={() => AplicarFiltros()}>
+      <Button disabled={filtroCliente.trim() === "" && filtroSinPagar === false} mode="text" color='#2792b2' onPress={() => AplicarFiltros()}>
         Aplicar
       </Button>
     </View>)
@@ -425,27 +423,36 @@ const Pedidos = ({ navigation }) => {
 
   const AplicarFiltros = () => {
 
-    let clonePedidos = cloneDeep(pedidos)
-    //setPedidos([])
+    let clonePedidos = cloneDeep(pedidos);
+    const filteredData = {};
 
-    const arrayFiltrado = clonePedidos.filter(item => {
-      const contieneFiltro = item.Pedidos.some(pedido => {
-        const contieneTexto = pedido.Nombre.toLowerCase().includes(filtroCliente.toLowerCase()) ||
-          (pedido.Direccion && pedido.Direccion.toLowerCase().includes(filtroCliente.toLowerCase()));
+    for (const fecha in clonePedidos) {
+      const pedidosDelDia = clonePedidos[fecha];
+      const filteredPedidos = pedidosDelDia.filter(pedido => {
+        const nameMatch = pedido && pedido.Nombre && pedido.Nombre.toLowerCase().includes(filtroCliente.toLowerCase());
+        const addressMatch = pedido && pedido.Direccion && pedido.Direccion.toLowerCase().includes(filtroCliente.toLowerCase());
+        const paymentMatch = filtroSinPagar ? pedido && pedido.Pagada === 'N' : true;
 
-        const cumpleFiltroPagados = filtroPagados ? pedido.Pagada === 'N' : true;
-
-        return contieneTexto && cumpleFiltroPagados;
+        return (nameMatch || addressMatch) && paymentMatch;
       });
 
-      return contieneFiltro;
-    });
+      if (filteredPedidos.length > 0) {
+        filteredData[fecha] = filteredPedidos;
+      }
+    }
 
-    console.log(arrayFiltrado)
-  }
+    console.log("Datos filtrados:", filteredData);
+    setPedidos(filteredData)
+    setFiltroActivo(true)
+    setModalFiltrosVisible(false)
+  };
 
   const QuitarFiltros = () => {
-
+    getPedidos()
+    setFiltroCliente("")
+    setFiltroSinPagar(false)
+    setFiltroActivo(false)
+    setModalFiltrosVisible(false)
   }
 
   const Tabla = () => {
@@ -515,17 +522,42 @@ const Pedidos = ({ navigation }) => {
         if (response.status === 200) {
           setCompletadoPagado(pagado)
           setLoadingPequenito(false); //oculta loader pequeñito
-          setPedidos([])
-          getPedidos() //se actualiza los pedidos para que tome la actualizacion de pagado
+
+          if (filtroActivo && filtroSinPagar && pagada) {
+            console.log("🚀 ~ file: Pedidos.js:532 ~ marcaCompletadoPagado ~ filtroActivo:", filtroActivo)
+            // Clona el objeto de pedidos
+            let pedidosClonados = cloneDeep(pedidos);
+
+            // Recorre las fechas en el objeto de pedidos
+            for (const fecha in pedidosClonados) {
+              const pedidosDelDia = pedidosClonados[fecha];
+
+              // Filtra los pedidos para eliminar el pedido por pedidoId
+              pedidosClonados[fecha] = pedidosDelDia.filter(pedido => pedido.Pedido_id !== id_pedido);
+            }
+
+            // Actualiza el estado con el nuevo objeto de pedidos
+            setModalVisible(false)
+            setPedidos([])
+            setPedidos(pedidosClonados);
+          } else {
+            setPedidos([])
+            getPedidos() //se actualiza los pedidos para que tome la actualizacion de pagado
+          }
+
           ToastAndroid.show('Se actualizó el pago del pedido', ToastAndroid.SHORT)
-          
         }
       })
       .catch(error => {
+        console.log("🚀 ~ file: Pedidos.js:552 ~ marcaCompletadoPagado ~ error:", error)
         setLoadingPequenito(false); //oculta loader pequeñito
-        alert("Error al actualizar el pago el pedido");
+        alert("Error al actualizar el pago el pedido ", error);
       });
+
+
   }
+
+
 
   /* RENDER */
 
@@ -736,8 +768,8 @@ const Pedidos = ({ navigation }) => {
               alignSelf: "center"
             }}>Pendientes de pago</Text>
             <CheckBox
-              value={filtroPagados}
-              onValueChange={(value) => setFiltroPagados(value)}
+              value={filtroSinPagar}
+              onValueChange={(value) => setFiltroSinPagar(value)}
               //color='#0e25d3' // Cambia el color del checkbox según tu preferencia
               style={{ alignSelf: "center" }}
             />
@@ -772,6 +804,7 @@ const Pedidos = ({ navigation }) => {
       <TouchableOpacity
         style={styles.floatingButton}
         onPress={openBottomSheet}
+        disabled={!resumenDiario}
       >
         <Icon name="bar-chart" size={25} color='white' />
       </TouchableOpacity>
